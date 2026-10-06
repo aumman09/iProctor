@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# iProctor MFU
 
-## Getting Started
+ระบบผู้ช่วยคุมสอบ (Intelligent Exam Room Controller) มหาวิทยาลัยแม่ฟ้าหลวง — ดูรายละเอียดความต้องการใน PRD
 
-First, run the development server:
+## เริ่มใช้งาน
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `http://localhost:3000/` → พาไปห้องสอบที่ได้รับมอบหมาย (ตอนนี้เป็น mock: `C3-107`)
+- `http://localhost:3000/room/C3-107` → หน้าจอฉายโปรเจกเตอร์
+- โหมดจำลองเวลา (ซ้อม/ทดสอบ): `/room/C3-107?session=afternoon&sim=13:14:50&speed=1`
+  จะมีแถบปุ่มกระโดดไปแต่ละเหตุการณ์ และปรับความเร็ว x1 / x10 / x60
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## โครงสร้าง
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├─ app/
+│  ├─ page.tsx                          # redirect ไปห้องสอบถัดไปของกรรมการ
+│  ├─ login/page.tsx                    # (TODO) MFU SSO
+│  ├─ room/[roomId]/page.tsx            # หน้าจอฉายห้องสอบ
+│  └─ api/v1/
+│     ├─ time/route.ts                  # เวลาอ้างอิงเซิร์ฟเวอร์ (NTP sync)
+│     ├─ exam-rooms/[roomId]/schedule/  # ตารางสอบของห้อง
+│     └─ proctor/my-assignment/         # งานคุมสอบถัดไป
+├─ lib/
+│  ├─ types.ts                          # data contracts (PRD §5)
+│  ├─ config.ts                         # เวลารอบสอบ, กฎแจ้งเตือน, รายการไฟล์เสียง
+│  ├─ schedule-engine.ts                # สร้างไทม์ไลน์ event + สถานะรายวิชา/ห้อง (pure)
+│  ├─ audio-engine.ts                   # Web Audio: unlock, คิวเสียง, chime สำรอง
+│  ├─ time.ts, cache.ts
+│  └─ server/data-source.ts             # ★ จุดเชื่อม MFU API (ตอนนี้เป็น mock)
+├─ workers/timer.worker.ts              # ticker แบบไม่ drift
+├─ hooks/                               # useOfficialTimer, useRoomSchedule, useExamEngine, useAudioEngine
+└─ components/                          # Header, OfficialClock, CourseCard, AlertCenter, InstructionSlides, ...
+public/audio/                           # ★ วางไฟล์เสียงประกาศที่นี่ (ดู README ในโฟลเดอร์)
+```
 
-## Learn More
+## ยังค้างอยู่ (TODO)
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- ไฟล์เสียงประกาศจริง (`public/audio/`)
+- เชื่อม MFU SSO (OAuth2 / OIDC) และ MFU Examination API (`src/lib/server/data-source.ts`)
+- ข้อความระเบียบการสอบฉบับทางการ (`src/components/InstructionSlides.tsx`)
