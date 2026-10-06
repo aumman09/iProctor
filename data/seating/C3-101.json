@@ -1,0 +1,28 @@
+{
+  "roomId": "C3-101",
+  "title": "Examination Seating C3 101",
+  "projectorPosition": "FRONT_CENTER",
+  "doorPositions": ["BACK_LEFT", "BACK_RIGHT"],
+  "groups": [
+    { "key": "A", "colorTheme": "pink", "courseName": "Cruise Operations and Services", "studentIdRange": "6731205017 - 6931205901" },
+    { "key": "B", "colorTheme": "white", "courseName": "Professional Physical Therapy", "studentIdRange": "6532502003 - 6632502075" }
+  ],
+  "rows": [
+    { "label": "Row 1", "blocks": [["A1", null, null, "A2"], ["A3", null, null, "A4"], ["A5", null, null, "A6"], ["A7", null, null, "A8"], ["A9", null, null, "A10"]] },
+    { "label": "Row 2", "blocks": [["B1", null, null, "B2"], ["B3", null, null, "B4"], ["B5", null, null, "B6"], ["B7", null, null, "B8"], ["B9", null, null, "B10"]] },
+    { "label": "Row 3", "blocks": [["A20", null, null, "A19"], ["A18", null, null, "A17"], ["A16", null, null, "A15"], ["A14", null, null, "A13"], ["A12", null, null, "A11"]] },
+    { "label": "Row 4", "blocks": [["B20", null, null, "B19"], ["B18", null, null, "B17"], ["B16", null, null, "B15"], ["B14", null, null, "B13"], ["B12", null, null, "B11"]] },
+    { "label": "Row 5", "blocks": [["A21", null, null, "A22"], ["A23", null, null, "A24"], ["A25", null, null, "A26"], ["A27", null, null, "A28"], ["A29", null, null, "A30"]] },
+    { "label": "Row 6", "blocks": [["B21", null, null, "B22"], ["B23", null, null, "B24"], ["B25", null, null, "B26"], ["B27", null, null, "B28"], ["B29", null, null, "B30"]] },
+    { "label": "Row 7", "blocks": [["A40", null, null, "A39"], ["A38", null, null, "A37"], ["A36", null, null, "A35"], ["A34", null, null, "A33"], ["A32", null, null, "A31"]] },
+    { "label": "Row 8", "blocks": [["B40", null, null, "B39"], ["B38", null, null, "B37"], ["B36", null, null, "B35"], ["B34", null, null, "B33"], ["B32", null, null, "B31"]] },
+    { "label": "Row 9", "blocks": [["A41", null, null, "A42"], ["A43", null, null, "A44"], ["A45", null, null, "A46"], ["A47", null, null, "A48"], ["A49", null, null, "A50"]] },
+    { "label": "Row 10", "blocks": [["B41", null, null, "B42"], ["B43", null, null, "B44"], ["B45", null, null, "B46"], ["B47", null, null, "B48"], ["B49", null, null, "B50"]] },
+    { "label": "Row 11", "blocks": [["A60", null, null, "A59"], ["A58", null, null, "A57"], ["A56", null, null, "A55"], ["A54", null, null, "A53"], ["A52", null, null, "A51"]] },
+    { "label": "Row 12", "blocks": [["B60", null, null, "B59"], ["B58", null, null, "B57"], ["B56", null, null, "B55"], ["B54", null, null, "B53"], ["B52", null, null, "B51"]] },
+    { "label": "Row 13", "blocks": [["A61", null, null, "A62"], ["A63", null, null, "A64"], ["A65", null, null, "A66"], ["A67", null, null, "A68"], ["A69", null, null, "A70"]] },
+    { "label": "Row 14", "blocks": [["B61", null, null, "B62"], ["B63", null, null, "B64"], ["B65", null, null, "B66"], ["B67", null, null, "B68"], ["B69", null, null, "B70"]] },
+    { "label": "Row 15", "blocks": [["A80", null, null, "A79"], ["A78", null, null, "A77"], ["A76", null, null, "A75"], ["A74", null, null, "A73"], ["A72", null, null, "A71"]] },
+    { "label": "Row 16", "blocks": [["B80", "B79"], ["B78", "B77"], ["B76", "B75"], ["B74", "B73"], ["B72", "B71"]] }
+  ]
+}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useExamEngine } from "@/hooks/useExamEngine";
 import { useOfficialTimer, type SimClock } from "@/hooks/useOfficialTimer";
+import { useRoomLayout } from "@/hooks/useRoomLayout";
 import { useRoomSchedule } from "@/hooks/useRoomSchedule";
 import { guessSession, parseSimStart, shortTime, todayISO } from "@/lib/time";
 import type { ExamEvent, SessionName } from "@/lib/types";
@@ -14,6 +15,7 @@ import { CourseCard } from "./CourseCard";
 import { Header } from "./Header";
 import { InstructionSlides } from "./InstructionSlides";
 import { OfficialClock } from "./OfficialClock";
+import { SeatingOverlay } from "./SeatingOverlay";
 
 const VERSION = "v2.0";
 
@@ -46,6 +48,14 @@ export function RoomController(props: RoomControllerProps) {
   const { schedule, source, error } = useRoomSchedule(props.roomId, target.date, target.session);
   const { now, offsetMs, synced } = useOfficialTimer(sim);
   const audio = useAudioEngine();
+  const layout = useRoomLayout(props.roomId);
+  // null = อัตโนมัติ (Pre-Exam Mode แสดงผังเต็มจอ), true/false = ผู้คุมสอบสลับเอง
+  const [seatingOverride, setSeatingOverride] = useState<boolean | null>(null);
+
+  const { engine: audioEngine } = audio;
+  useEffect(() => {
+    void audioEngine.useRoom(props.roomId);
+  }, [audioEngine, props.roomId]);
 
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [slides, setSlides] = useState<"auto" | "manual" | null>(null);
@@ -133,6 +143,7 @@ export function RoomController(props: RoomControllerProps) {
     );
   }
 
+  const showSeating = !!layout && (seatingOverride ?? phase === "PRE_EXAM");
   const showSlides = slides === "manual" || (slides === "auto" && phase === "INSTRUCTION");
 
   return (
@@ -155,6 +166,13 @@ export function RoomController(props: RoomControllerProps) {
         onToggleMute={() => audio.engine.setMuted(!audio.muted)}
         onTestSound={() => void audio.engine.test()}
         onShowSlides={() => setSlides("manual")}
+        onShowSeating={layout ? () => setSeatingOverride(true) : null}
+        customAudio={{
+          name: audio.customName,
+          onPick: (f) => void audio.engine.setCustomStartFile(f),
+          onPreview: () => void audio.engine.previewStart(),
+          onClear: () => void audio.engine.clearCustomStart(),
+        }}
         sim={
           sim && {
             schedule,
@@ -166,6 +184,9 @@ export function RoomController(props: RoomControllerProps) {
         }
       />
 
+      {showSeating && layout && (
+        <SeatingOverlay layout={layout} now={now} schedule={schedule} phase={phase} autoMode={seatingOverride === null} onClose={() => setSeatingOverride(false)} />
+      )}
       {showSlides && <InstructionSlides schedule={schedule} onClose={() => setSlides(null)} />}
       <AlertCenter alerts={alerts} onDismiss={dismissAlert} />
       {!audio.unlocked && <AudioUnlockGate roomCode={schedule.room_code} onUnlock={() => void audio.engine.unlock()} />}

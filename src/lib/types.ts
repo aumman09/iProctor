@@ -96,3 +96,65 @@ export interface ExamEvent {
   at: number;
   courseId?: string;
 }
+
+// ---------- v2: Portal / Seating / Auth (Docs/iproctor_mfu_technical_requirements.md §3) ----------
+
+export type UserRole = "proctor" | "admin";
+
+export interface AuthUser {
+  staff_id: string;
+  name: string;
+  role: UserRole;
+}
+
+export type ExamPeriod = "Midterm 1/2026" | "Final 1/2026";
+export type DutyStatus = "UPCOMING" | "LIVE" | "COMPLETED";
+
+export interface ProctorDuty {
+  dutyId: string;
+  examPeriod: ExamPeriod;
+  /** "YYYY-MM-DD" */
+  date: string;
+  session: SessionName;
+  /** "13:30 - 16:30" */
+  sessionTime: string;
+  building: string;
+  roomNumber: string;
+  /** roomId สำหรับ /room/[roomId] เช่น "C3-107" */
+  roomId: string;
+  isCurrentSession: boolean;
+  status: DutyStatus;
+  /** เปิดปุ่ม Launch ได้ (ก่อนเริ่ม 30 นาที จนจบรอบ) */
+  canLaunch: boolean;
+  coursesSummary: Array<{
+    courseCode: string;
+    courseName: string;
+    rowLabel: string;
+    seatColorTheme: SeatColorTheme;
+  }>;
+}
+
+/** กลุ่มที่นั่ง = ตัวอักษรนำเลขที่นั่ง (เช่น "A" → A1, A2, ...) ผูกกับวิชาและสีป้าย */
+export interface SeatingGroup {
+  key: string;
+  colorTheme: SeatColorTheme;
+  courseName: string;
+  studentIdRange: string;
+}
+
+/** แถวแนวนอนหนึ่งแถว (นับจากหน้าห้อง) แบ่งเป็นกลุ่มโต๊ะซ้าย→ขวา; null = เก้าอี้ว่างที่เว้นไว้ */
+export interface SeatingRow {
+  label: string;
+  blocks: Array<Array<string | null>>;
+}
+
+/** ผังที่นั่งตามแบบผังจริงของสำนักทะเบียน: แถว × กลุ่มโต๊ะ, เลขที่นั่งระบุตรง ๆ (รองรับเลขวิ่งสลับทิศ) */
+export interface RoomLayoutResponse {
+  roomId: string;
+  title?: string;
+  projectorPosition: "FRONT_CENTER";
+  doorPositions: Array<"FRONT_LEFT" | "FRONT_RIGHT" | "BACK_LEFT" | "BACK_RIGHT">;
+  groups: SeatingGroup[];
+  rows: SeatingRow[];
+  disabledSeats?: string[];
+}

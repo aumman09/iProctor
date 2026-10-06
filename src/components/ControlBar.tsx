@@ -1,6 +1,7 @@
 "use client";
 
-import { Maximize, Presentation, Volume2, VolumeX } from "lucide-react";
+import { useRef } from "react";
+import { LayoutGrid, Maximize, Music, Play, Presentation, Trash2, Volume2, VolumeX } from "lucide-react";
 import { formatClock } from "@/lib/time";
 import type { ExamEvent, RoomSchedule } from "@/lib/types";
 
@@ -24,6 +25,8 @@ interface Props {
   onToggleMute: () => void;
   onTestSound: () => void;
   onShowSlides: () => void;
+  onShowSeating: (() => void) | null;
+  customAudio: { name: string | null; onPick: (file: File) => void; onPreview: () => void; onClear: () => void };
   sim: null | {
     schedule: RoomSchedule;
     timeline: ExamEvent[];
@@ -48,6 +51,12 @@ export function ControlBar(p: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {p.onShowSeating && (
+            <button onClick={p.onShowSeating} className={`${btn} text-slate-600`}>
+              <LayoutGrid className="w-3.5 h-3.5" /> ผังที่นั่ง
+            </button>
+          )}
+          <CustomAudio {...p.customAudio} />
           <button onClick={p.onShowSlides} className={`${btn} text-slate-600`}>
             <Presentation className="w-3.5 h-3.5" /> ระเบียบการสอบ
           </button>
@@ -89,5 +98,35 @@ function SimControls({ schedule, timeline, speed, onJump, onSpeed }: NonNullable
         </button>
       ))}
     </div>
+  );
+}
+
+function CustomAudio({ name, onPick, onPreview, onClear }: Props["customAudio"]) {
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <span className="inline-flex items-center gap-1">
+      <input
+        ref={input}
+        type="file"
+        accept="audio/mpeg,audio/wav,audio/x-wav,.mp3,.wav"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+          e.target.value = "";
+        }}
+      />
+      <button onClick={() => input.current?.click()} className={`${btn} text-slate-600`} title="เลือกไฟล์เสียงคำชี้แจงเริ่มสอบ (.mp3 / .wav)">
+        <Music className="w-3.5 h-3.5" /> {name ? `เสียงคำชี้แจง: ${name}` : "เลือกเสียงคำชี้แจง"}
+      </button>
+      <button onClick={onPreview} className={`${btn} text-slate-600`} title="ฟังตัวอย่างเสียงคำชี้แจง">
+        <Play className="w-3.5 h-3.5" />
+      </button>
+      {name && (
+        <button onClick={onClear} className={`${btn} text-rose-600`} title="ลบไฟล์เสียงที่เลือก">
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </span>
   );
 }

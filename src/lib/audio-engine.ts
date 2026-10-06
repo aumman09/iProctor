@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // Web Audio Engine
 // - ต้อง unlock() จากการคลิกของผู้ใช้ครั้งแรก (browser autoplay policy)
@@ -6,6 +6,7 @@
 // - ถ้าไม่พบไฟล์เสียงใน public/audio/ จะเล่น chime สังเคราะห์แทน
 
 import { AUDIO_CUES, type AudioCue } from "./config";
+import { deleteCustomAudio, loadCustomAudio, saveCustomAudio } from "./custom-audio-store";
 
 type Note = { freq: number; dur: number; delay: number };
 
@@ -40,6 +41,11 @@ class AudioEngine {
   private playing = false;
   private listeners = new Set<Listener>();
   muted = false;
+  /** ไฟล์เสียงคำชี้แจงเริ่มสอบที่อัปโหลดเอง (FR-04) — ใช้แทนเสียง "rules" เมื่อมี */
+  customName: string | null = null;
+  private customData: ArrayBuffer | null = null;
+  private customBuf: AudioBuffer | null = null;
+  private roomKey: string | null = null;
   /** ชื่อ cue ที่กำลังเล่นอยู่ (ใช้แสดงสถานะบนจอ) */
   current: AudioCue | null = null;
 
@@ -78,6 +84,39 @@ class AudioEngine {
     void this.drain();
   }
 
+  /** โหลดไฟล์เสียงที่เคยอัปโหลดไว้ของห้องนี้ */
+  async useRoom(roomId: string) {
+    if (this.roomKey === roomId) return;
+    this.roomKey = roomId;
+    const saved = await loadCustomAudio(roomId);
+    this.setCustom(saved?.data ?? null, saved?.name ?? null);
+  }
+
+  async setCustomStartFile(file: File) {
+    const data = await file.arrayBuffer();
+    if (this.roomKey) await saveCustomAudio(this.roomKey, { name: file.name, data: data.slice(0) });
+    this.setCustom(data, file.name);
+    void this.load("rules");
+  }
+
+  async clearCustomStart() {
+    if (this.roomKey) await deleteCustomAudio(this.roomKey);
+    this.setCustom(null, null);
+  }
+
+  /** ฟังตัวอย่างเสียงคำชี้แจงเริ่มสอบ (ข้ามคิว) */
+  async previewStart() {
+    await this.playCue("rules");
+  }
+
+  private setCustom(data: ArrayBuffer | null, name: string | null) {
+    this.customData = data;
+    this.customName = name;
+    this.customBuf = null;
+    this.buffers.delete("rules");
+    this.emit();
+  }
+
   /** ทดสอบเสียง (ข้ามคิว) */
   async test(cue: AudioCue = "departure") {
     await this.playCue(cue);
@@ -91,6 +130,17 @@ class AudioEngine {
     if (this.buffers.has(cue)) return this.buffers.get(cue)!;
     if (!this.ctx) return null;
     let buf: AudioBuffer | null = null;
+    if (cue === "rules" && this.customData) {
+      try {
+        buf = this.customBuf ??= await this.ctx.decodeAudioData(this.customData.slice(0));
+      } catch {
+        buf = null; // ไฟล์ที่อัปโหลดเสียหาย → ใช้เสียงมาตรฐาน
+      }
+      if (buf) {
+        this.buffers.set(cue, buf);
+        return buf;
+      }
+    }
     try {
       const res = await fetch(AUDIO_CUES[cue]);
       if (res.ok) buf = await this.ctx.decodeAudioData(await res.arrayBuffer());
@@ -156,3 +206,4 @@ class AudioEngine {
 }
 
 export const audioEngine = new AudioEngine();
+

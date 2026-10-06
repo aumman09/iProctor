@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+
 type Status = "active" | "offline" | "simulation";
 
 const STATUS: Record<Status, { label: string; cls: string; dot: string }> = {
@@ -11,6 +14,9 @@ export function Header({ roomCode, status }: { roomCode: string; status: Status 
   return (
     <header className="max-w-6xl mx-auto w-full pt-8 pb-4 px-6 md:px-8 flex justify-between items-center gap-4">
       <div className="flex items-center gap-3.5">
+        <Link href="/portal" title="กลับหน้าตารางคุมสอบ" className="w-10 h-10 rounded-2xl border border-slate-200/80 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 shadow-sm">
+          <ArrowLeft className="w-4 h-4" />
+        </Link>
         <div className="w-10 h-10 rounded-2xl bg-slate-950 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-md">
           iP
         </div>

@@ -9,5 +9,6 @@ export function useAudioEngine() {
   const unlocked = useSyncExternalStore(subscribe, () => audioEngine.unlocked, () => false);
   const muted = useSyncExternalStore(subscribe, () => audioEngine.muted, () => false);
   const current = useSyncExternalStore(subscribe, () => audioEngine.current, () => null);
-  return { engine: audioEngine, unlocked, muted, current };
+  const customName = useSyncExternalStore(subscribe, () => audioEngine.customName, () => null);
+  return { engine: audioEngine, unlocked, muted, current, customName };
 }

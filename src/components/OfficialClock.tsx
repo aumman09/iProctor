@@ -3,14 +3,14 @@ import { PHASE_LABEL } from "@/lib/schedule-engine";
 import { formatClock, shortTime } from "@/lib/time";
 import type { RoomPhase, RoomSchedule } from "@/lib/types";
 
-export function OfficialClock({ now, schedule, phase }: { now: number; schedule: RoomSchedule; phase: RoomPhase }) {
+export function OfficialClock({ now, schedule, phase, compact = false }: { now: number; schedule: RoomSchedule; phase: RoomPhase; compact?: boolean }) {
   const label = PHASE_LABEL[phase];
   return (
     <section className="text-center my-3">
       <span className="text-[10px] lg:text-xs font-bold tracking-[0.25em] text-slate-400 uppercase">
         MFU Official Standard Time
       </span>
-      <div className="font-num text-7xl md:text-9xl lg:text-[11rem] leading-none font-extralight tracking-tight text-slate-950 my-2">
+      <div className={`font-num leading-none ${compact ? "text-6xl md:text-8xl" : "text-7xl md:text-9xl lg:text-[11rem]"} font-extralight tracking-tight text-slate-950 my-2`}>
         {formatClock(now)}
       </div>
       <div className="text-xs lg:text-sm text-slate-400 font-medium">
