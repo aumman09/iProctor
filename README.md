@@ -58,8 +58,9 @@ npm run dev
 
 ## ข้อมูลที่ต้องเตรียม
 
-- **ผังที่นั่ง** — หนึ่งห้องหนึ่งไฟล์ `data/seating/<ROOM_ID>.json` เขียนตามผังกระดาษของสำนักทะเบียน
-  วิธีเขียนดู [data/seating/README.md](data/seating/README.md) (ตัวอย่างผังจริง: `C3-101.json`)
+- **ผังที่นั่ง** — หนึ่งห้องหนึ่งไฟล์ `data/seating/<ROOM_ID>.json` แปลงอัตโนมัติจาก PDF ของสำนักทะเบียน
+  ด้วย `python scripts/seating/import_pdf.py <pdf>` (ต้องมี Python + `pip install pymupdf`)
+  ดู [data/seating/README.md](data/seating/README.md)
 - **ไฟล์เสียงประกาศ** — วางใน `public/audio/` ตามชื่อใน [public/audio/README.md](public/audio/README.md)
   ถ้าไม่มีไฟล์ ระบบเล่นเสียง chime สังเคราะห์แทน
 - **เสียงคำชี้แจงเริ่มสอบแบบกำหนดเอง** — เลือกไฟล์ .mp3/.wav จากแถบควบคุมบนหน้าจอคุมสอบ

@@ -134,27 +134,57 @@ export interface ProctorDuty {
   }>;
 }
 
-/** กลุ่มที่นั่ง = ตัวอักษรนำเลขที่นั่ง (เช่น "A" → A1, A2, ...) ผูกกับวิชาและสีป้าย */
+/**
+ * กลุ่มที่นั่ง = ตัวอักษรนำเลขที่นั่ง (เช่น "A" → A1, A2, ...; "" = เลขล้วน) + สีป้ายกระดาษ
+ * courseName/studentIdRange เป็นข้อมูลรายรอบสอบ — ผังที่แปลงจาก PDF จะยังไม่มี
+ */
 export interface SeatingGroup {
   key: string;
   colorTheme: SeatColorTheme;
-  courseName: string;
-  studentIdRange: string;
+  courseName?: string;
+  studentIdRange?: string;
 }
 
-/** แถวแนวนอนหนึ่งแถว (นับจากหน้าห้อง) แบ่งเป็นกลุ่มโต๊ะซ้าย→ขวา; null = เก้าอี้ว่างที่เว้นไว้ */
-export interface SeatingRow {
-  label: string;
-  blocks: Array<Array<string | null>>;
+export type Wall = "TOP" | "BOTTOM" | "LEFT" | "RIGHT";
+
+/** กล่องในพิกัดห้อง (หน่วย pt ของ PDF, มุมซ้ายบนด้านในห้อง = 0,0) */
+export interface LayoutBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
-/** ผังที่นั่งตามแบบผังจริงของสำนักทะเบียน: แถว × กลุ่มโต๊ะ, เลขที่นั่งระบุตรง ๆ (รองรับเลขวิ่งสลับทิศ) */
+/** เลขที่นั่ง — x, y = จุดกึ่งกลางของตัวเลขบนผัง */
+export interface LayoutSeat {
+  id: string;
+  x: number;
+  y: number;
+  group: string;
+}
+
+/**
+ * ผังที่นั่งตามแบบผังจริง (ตำแหน่งโต๊ะ/เก้าอี้/ประตูตามต้นฉบับ) — หน้าห้อง (ไวท์บอร์ด) อยู่ด้านบนเสมอ
+ * สร้างจาก PDF สำนักทะเบียนด้วย scripts/seating/import_pdf.py
+ */
 export interface RoomLayoutResponse {
   roomId: string;
   title?: string;
-  projectorPosition: "FRONT_CENTER";
-  doorPositions: Array<"FRONT_LEFT" | "FRONT_RIGHT" | "BACK_LEFT" | "BACK_RIGHT">;
+  /** ขนาดด้านในห้อง */
+  size: { w: number; h: number };
+  /** ขนาดตัวเลขที่นั่งในต้นฉบับ (pt) ใช้คำนวณขนาดตัวอักษรบนจอ */
+  labelSize?: number;
+  whiteboard?: LayoutBox;
+  /** at = ตำแหน่งตามแนวผนัง 0..1 (ซ้าย→ขวา หรือ บน→ล่าง) */
+  doors: Array<{ wall: Wall; at: number }>;
   groups: SeatingGroup[];
-  rows: SeatingRow[];
+  seats: LayoutSeat[];
+  desks?: LayoutBox[];
+  /** seat = เลขที่นั่งของเก้าอี้ตัวนั้น; ไม่มี = เก้าอี้ว่างที่เว้นไว้ */
+  chairs?: Array<LayoutBox & { seat?: string }>;
+  /** ป้ายแถว เช่น "Row 1" (อาจอยู่นอกผนัง: x < 0 หรือ x > size.w) */
+  rowLabels?: Array<{ label: string; x: number; y: number }>;
   disabledSeats?: string[];
+  /** ที่มา (ไฟล์ PDF, หน้า, ฝั่งไวท์บอร์ดในต้นฉบับ) */
+  source?: { file: string; page: number; front: Wall };
 }

@@ -19,9 +19,9 @@ export function useRoomLayout(roomId: string) {
       })
       .catch(() => {
         if (ctrl.signal.aborted) return;
-        // cache รูปแบบเก่า (rowLabels/columns) ใช้กับ SeatingChart ปัจจุบันไม่ได้ — ข้ามไป
+        // cache รูปแบบเก่า (ก่อนเป็นพิกัดกริด) ใช้กับ SeatingChart ปัจจุบันไม่ได้ — ข้ามไป
         const cached = readCache<RoomLayoutResponse>(key);
-        setLayout(Array.isArray(cached?.rows) ? cached : null);
+        setLayout(Array.isArray(cached?.seats) ? cached : null);
       });
     return () => ctrl.abort();
   }, [roomId]);

@@ -43,7 +43,7 @@ src/components/ RoomController (ตัวประกอบหลัก), Seatin
 | FR-01.1 | MFU SSO (OIDC) | ❌ TODO (ปุ่มปิดไว้ใน /login) |
 | FR-01.2 | Mock Login proctor/admin | ✅ |
 | FR-02.1–02.4 | Portal, period selector, Launch, ค้นหาห้อง | ✅ (ข้อมูล mock) |
-| FR-03.1–03.2 | ผังที่นั่งตามผังจริง (แถว × กลุ่มโต๊ะ, ประตู/ไวท์บอร์ด) + ช่วงรหัส นศ. | ✅ ผังรายห้องเก็บที่ `data/seating/<ROOM_ID>.json` (ดู README ในโฟลเดอร์) — มี C3-101 (ผังจริง) และ C3-107 (mock) |
+| FR-03.1–03.2 | ผังที่นั่งตามผังจริง (แถว × กลุ่มโต๊ะ, ประตู/ไวท์บอร์ด) + ช่วงรหัส นศ. | ✅ ผังตามแบบผังจริง (โต๊ะ/เก้าอี้/ประตู พิกัดจาก PDF) ที่ `data/seating/<ROOM_ID>.json` แปลงจาก PDF สำนักทะเบียนด้วย `scripts/seating/import_pdf.py` (ดู README ในโฟลเดอร์) — ครบ 131 ห้อง 10 อาคาร (D1-301/306 ควรตรวจไวท์บอร์ด) |
 | FR-04.1–04.3 | เสียงกำหนดเอง, auto trigger, chime fallback | ✅ แบบเก็บในเครื่อง (ยังไม่มี upload ไป server / `customAudioUrl`) |
 | FR-05.1–05.4 | จอมินิมอล, timer รายวิชา, 45 นาที, **Live Proctor Notes** | ✅ ยกเว้น **FR-05.4 Notes ยังไม่ได้ทำ** |
 | Rec.1 | Pre/During-exam mode | ✅ |
