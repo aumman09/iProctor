@@ -108,3 +108,33 @@ export function DailyBars({ data }: { data: Array<{ label: string; value: number
     </div>
   );
 }
+
+const hm = (d: Date) => d.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
+
+/** ไฟสถานะหน้าจอคุมสอบ (heartbeat) — ไฟเขียวกะพริบ = กำลังคุมสอบ, เทา = ปิดจอ/ขาดการเชื่อมต่อ; มีข้อความกำกับเสมอ */
+export function ScreenLight({
+  screen,
+  compact = false,
+}: {
+  screen: { state: "live" | "stale"; openedAt: Date; lastSeenAt: Date; openedBy: string | null } | null;
+  compact?: boolean;
+}) {
+  if (!screen) return null;
+  const live = screen.state === "live";
+  const title = `เปิดหน้าจอ ${hm(screen.openedAt)}${screen.openedBy ? ` โดย ${screen.openedBy}` : ""} · สัญญาณล่าสุด ${hm(screen.lastSeenAt)}`;
+  return (
+    <span
+      title={title}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+        live ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-slate-100 text-slate-500"
+      }`}
+    >
+      <span className="relative flex h-2 w-2">
+        {live && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />}
+        <span className={`relative inline-flex h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-400"}`} />
+      </span>
+      {live ? "กำลังคุมสอบ" : "ปิดหน้าจอแล้ว"}
+      {!compact && <span className="font-num font-normal opacity-80">· เปิด {hm(screen.openedAt)}</span>}
+    </span>
+  );
+}

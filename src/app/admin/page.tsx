@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Activity, CalendarCheck, CheckCheck, DoorOpen, MonitorPlay, Users } from "lucide-react";
-import { Card, DailyBars, PageHeader, StatTile, StatusChip } from "@/components/admin/ui";
+import { AutoRefresh } from "@/components/admin/AutoRefresh";
+import { Card, DailyBars, PageHeader, ScreenLight, StatTile, StatusChip } from "@/components/admin/ui";
 import { SEAT_THEME } from "@/components/seat-theme";
 import { bangkokToday, getCompletionStats, getRecentActivity, getUsageSummary } from "@/lib/server/admin";
 import { getExamPeriods } from "@/lib/server/data-source";
@@ -26,6 +27,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
 
   return (
     <>
+      <AutoRefresh />
       <PageHeader
         title="ภาพรวม"
         sub={`${thaiDay(today, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · ${period ?? "ยังไม่มีช่วงสอบ"}`}
@@ -65,7 +67,17 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
           }
           sub={`ใช้ห้องสอบ ${stats.rooms} ห้อง`}
         />
-        <StatTile icon={MonitorPlay} label="เปิดหน้าจอคุมสอบวันนี้" value={usage.today.roomOpens} sub={`ดูผังที่นั่ง ${usage.today.seatingViews} ครั้ง`} />
+        <StatTile
+          icon={MonitorPlay}
+          label="ห้องที่กำลังคุมสอบตอนนี้"
+          value={
+            <span className="inline-flex items-center gap-2">
+              {stats.liveNow > 0 && <span className="h-3 w-3 rounded-full bg-emerald-500" aria-hidden />}
+              {stats.liveNow}
+            </span>
+          }
+          sub={`เปิดหน้าจอคุมสอบวันนี้ ${usage.today.roomOpens} ครั้ง · ดูผัง ${usage.today.seatingViews} ครั้ง`}
+        />
         <StatTile icon={Users} label="ผู้ใช้งาน 7 วันล่าสุด" value={usage.activeUsers7d} sub={`เข้าสู่ระบบวันนี้ ${usage.today.logins} ครั้ง`} />
       </div>
 
@@ -88,11 +100,14 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
                 const done = s.courses.filter((c) => c.completedAt).length;
                 return (
                   <li key={s.slotId} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
-                    <div className="w-28 flex-shrink-0">
+                    <div className="w-36 flex-shrink-0">
                       <p className="font-semibold text-slate-900">
                         {s.building} {s.roomNumber}
                       </p>
                       <p className="text-xs text-slate-500">{SESSION[s.session]}</p>
+                      <div className="mt-1">
+                        <ScreenLight screen={s.screen} compact />
+                      </div>
                     </div>
                     <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                       {s.courses.map((c) => (

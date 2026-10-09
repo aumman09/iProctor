@@ -64,6 +64,22 @@ export function RoomController(props: RoomControllerProps) {
   const [completion, setCompletion] = useState<Record<string, string | null>>({});
   const [confirming, setConfirming] = useState<string | null>(null);
 
+  // heartbeat ทุก 1 นาทีขณะเปิดหน้าจอ → Admin เห็นไฟเขียว "กำลังคุมสอบ" (ไม่ส่งในโหมดจำลองเวลา/demo — ไม่ใช่การคุมสอบจริง)
+  const live = !sim && !props.demo;
+  useEffect(() => {
+    if (!live) return;
+    const beat = () =>
+      void fetch(`/api/v1/exam-rooms/${encodeURIComponent(props.roomId)}/heartbeat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: target.date, session: target.session }),
+        keepalive: true,
+      }).catch(() => {});
+    beat();
+    const id = setInterval(beat, 60_000);
+    return () => clearInterval(id);
+  }, [live, props.roomId, target.date, target.session]);
+
   const { engine: audioEngine } = audio;
   useEffect(() => {
     void audioEngine.useRoom(props.roomId);

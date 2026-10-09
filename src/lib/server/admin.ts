@@ -86,8 +86,13 @@ export interface ExamCourseRow {
   completedAt: Date | null;
   completedByName: string | null;
 }
+/** สถานะหน้าจอคุมสอบ: live = ส่งสัญญาณภายใน 3 นาที, stale = เคยเปิดแต่ขาดสัญญาณ, null = ยังไม่เคยเปิด */
+export type ScreenState = { state: "live" | "stale"; openedAt: Date; lastSeenAt: Date; openedBy: string | null } | null;
+const LIVE_WINDOW_MS = 3 * 60_000;
+
 export interface ExamSlotRow {
   slotId: number;
+  screen: ScreenState;
   roomId: string;
   building: string;
   roomNumber: string;
@@ -120,6 +125,9 @@ export async function getExamOverview(f: {
       date: examSlots.examDate,
       session: examSlots.session,
       period: examPeriods.label,
+      screenOpenedAt: examSlots.screenOpenedAt,
+      screenLastSeenAt: examSlots.screenLastSeenAt,
+      screenOpenedBy: sql<string | null>`(select ${staff.name} from ${staff} where ${staff.staffId} = ${examSlots.screenOpenedBy})`,
     })
     .from(examSlots)
     .innerJoin(rooms, eq(rooms.id, examSlots.roomId))
@@ -159,9 +167,19 @@ export async function getExamOverview(f: {
   ]);
 
   const q = f.q?.trim().toLowerCase().replace(/[\s-]/g, "");
+  const now = Date.now();
   return slots
-    .map((s) => ({
+    .map(({ screenOpenedAt, screenLastSeenAt, screenOpenedBy, ...s }) => ({
       ...s,
+      screen:
+        screenOpenedAt && screenLastSeenAt
+          ? {
+              state: now - screenLastSeenAt.getTime() <= LIVE_WINDOW_MS ? ("live" as const) : ("stale" as const),
+              openedAt: screenOpenedAt,
+              lastSeenAt: screenLastSeenAt,
+              openedBy: screenOpenedBy,
+            }
+          : null,
       proctors: ps.filter((p) => p.slotId === s.slotId).map(({ name, role }) => ({ name, role })),
       courses: cs
         .filter((c) => c.slotId === s.slotId)
@@ -191,6 +209,7 @@ export async function getCompletionStats(period?: string) {
     slots: slots.length,
     slotsDone: roomsDone,
     rooms: new Set(slots.map((s) => s.roomId)).size,
+    liveNow: slots.filter((s) => s.screen?.state === "live").length,
     todaySlots: todays,
   };
 }

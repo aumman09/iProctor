@@ -2,7 +2,8 @@ import Link from "next/link";
 import { LayoutGrid, MonitorPlay, Search, UserRound } from "lucide-react";
 import { setCompletionByAdmin } from "../actions";
 import { CourseNoteForm } from "@/components/admin/CourseNoteForm";
-import { Card, PageHeader, StatusChip } from "@/components/admin/ui";
+import { AutoRefresh } from "@/components/admin/AutoRefresh";
+import { Card, PageHeader, ScreenLight, StatusChip } from "@/components/admin/ui";
 import { SEAT_THEME } from "@/components/seat-theme";
 import { getExamOverview } from "@/lib/server/admin";
 import { getExamPeriods } from "@/lib/server/data-source";
@@ -29,7 +30,11 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
 
   return (
     <>
-      <PageHeader title="รอบสอบ & รายวิชา" sub="สถานะการส่งข้อสอบรายวิชา และข้อกำหนดเพิ่มเติมที่จะแสดงบนหน้าจอคุมสอบ" />
+      <AutoRefresh />
+      <PageHeader
+        title="รอบสอบ & รายวิชา"
+        sub="สถานะหน้าจอคุมสอบ (ไฟเขียว = กำลังคุมสอบ) การส่งข้อสอบรายวิชา และข้อกำหนดเพิ่มเติม — อัปเดตอัตโนมัติทุก 30 วินาที"
+      />
 
       <form method="get" className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3">
         <select name="period" defaultValue={period} className={field}>
@@ -85,7 +90,8 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
                       {s.proctors.map((p) => `${p.name}${p.role === "HEAD" ? " (หลัก)" : ""}`).join(", ") || "ยังไม่มีผู้คุมสอบ"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ScreenLight screen={s.screen} />
                     <StatusChip done={done === s.courses.length}>
                       ส่งแล้ว {done}/{s.courses.length}
                     </StatusChip>

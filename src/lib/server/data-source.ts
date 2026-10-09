@@ -278,3 +278,18 @@ export async function getDemoSchedule(roomId: string, date: string, session: Ses
     }),
   };
 }
+
+/** หน้าจอคุมสอบยังเปิดอยู่ — บันทึกเวลาเปิดครั้งแรก (ครั้งเดียว) และเวลาล่าสุด; ไม่มีรอบสอบจริง (demo) = false */
+export async function recordScreenHeartbeat(roomId: string, date: string, session: SessionName, staffId: string | null) {
+  const now = new Date();
+  const rows = await db
+    .update(examSlots)
+    .set({
+      screenLastSeenAt: now,
+      screenOpenedAt: sql`coalesce(${examSlots.screenOpenedAt}, ${now.toISOString()}::timestamptz)`,
+      screenOpenedBy: sql`coalesce(${examSlots.screenOpenedBy}, ${staffId}::text)`,
+    })
+    .where(and(eq(examSlots.roomId, roomId.toUpperCase()), eq(examSlots.examDate, date), eq(examSlots.session, session)))
+    .returning({ id: examSlots.id });
+  return rows.length > 0;
+}

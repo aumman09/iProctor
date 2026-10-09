@@ -15,6 +15,13 @@
       "when": 1791515295991,
       "tag": "0001_admin_completion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791531248287,
+      "tag": "0002_screen_heartbeat",
+      "breakpoints": true
     }
   ]
 }

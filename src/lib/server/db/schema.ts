@@ -110,6 +110,10 @@ export const examSlots = pgTable(
     roomId: text("room_id").notNull().references(() => rooms.id),
     examDate: date("exam_date").notNull(),
     session: sessionName("session").notNull(),
+    /** หน้าจอคุมสอบของรอบนี้เปิดครั้งแรก / ส่งสัญญาณล่าสุด (heartbeat ทุก 1 นาที) → ไฟสถานะใน Admin */
+    screenOpenedAt: timestamp("screen_opened_at", { withTimezone: true }),
+    screenLastSeenAt: timestamp("screen_last_seen_at", { withTimezone: true }),
+    screenOpenedBy: text("screen_opened_by"),
     ...timestamps,
   },
   (t) => [
