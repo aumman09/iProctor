@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useExamEngine } from "@/hooks/useExamEngine";
 import { useOfficialTimer, type SimClock } from "@/hooks/useOfficialTimer";
+import { useProctorNotes } from "@/hooks/useProctorNotes";
 import { useRoomLayout } from "@/hooks/useRoomLayout";
 import { useRoomSchedule } from "@/hooks/useRoomSchedule";
 import { guessSession, parseSimStart, shortTime, todayISO } from "@/lib/time";
@@ -15,6 +16,7 @@ import { CourseCard } from "./CourseCard";
 import { Header } from "./Header";
 import { InstructionSlides } from "./InstructionSlides";
 import { OfficialClock } from "./OfficialClock";
+import { NoteBoard, NoteEditor } from "./ProctorNotes";
 import { SeatingOverlay } from "./SeatingOverlay";
 
 const VERSION = "v2.0";
@@ -51,6 +53,9 @@ export function RoomController(props: RoomControllerProps) {
   const layout = useRoomLayout(props.roomId);
   // null = อัตโนมัติ (Pre-Exam Mode แสดงผังเต็มจอ), true/false = ผู้คุมสอบสลับเอง
   const [seatingOverride, setSeatingOverride] = useState<boolean | null>(null);
+  // FR-05.4 ประกาศของกรรมการ — เก็บในเครื่องฉาย แยกตามห้อง/วัน/รอบ (โหมดจำลองแยก key ไม่ปนของจริง)
+  const notes = useProctorNotes(`${props.roomId}:${target.date}:${target.session}${sim ? ":sim" : ""}`);
+  const [editingNote, setEditingNote] = useState(false);
 
   const { engine: audioEngine } = audio;
   useEffect(() => {
@@ -112,14 +117,15 @@ export function RoomController(props: RoomControllerProps) {
         case "COURSE_END": {
           audio.engine.enqueue("timeout");
           const continuing = schedule.courses.filter((c) => c.course_id !== ev.courseId && c.end_time > (course?.end_time ?? ""));
+          const seat = (c?: { row_label: string }) => (c?.row_label ? `Seat ${c.row_label}` : "");
           pushAlert({
             id: ev.id,
             kind: "end",
             variant: "modal",
-            title: `หมดเวลาทำข้อสอบ (แถว ${course?.row_label})`,
+            title: ["Time is up", seat(course), course?.course_code].filter(Boolean).join(" · "),
             description:
-              `${courseLabel} สิ้นสุดเวลาแล้ว กรุณาวางปากกา กรรมการจะดำเนินการเก็บข้อสอบ` +
-              (continuing.length ? ` — นักศึกษาแถว ${continuing.map((c) => c.row_label).join(", ")} ทำข้อสอบต่อได้ตามปกติ` : ""),
+              "Time is up. Please put down your pen and remain seated until all answer sheets are collected." +
+              (continuing.length ? ` (Students in ${continuing.map(seat).join(", ")} may continue.)` : ""),
           });
           break;
         }
@@ -131,6 +137,14 @@ export function RoomController(props: RoomControllerProps) {
     },
     [schedule, audio.engine, pushAlert],
   );
+
+  // ปุ่มทดสอบสถานการณ์: ยิงเหตุการณ์จำลองทันที (เสียง + popup/สไลด์/ผัง) ไม่กระทบเวลาและสถานะจริง
+  const testEvent = (type: ExamEvent["type"], courseId?: string) => {
+    if (now === null) return;
+    handleEvent({ id: `test:${type}:${courseId ?? ""}:${Date.now()}`, type, at: now, courseId });
+    if (type === "ROOM_OPEN") setSeatingOverride(true);
+    if (type === "EXAM_START") setSlides("manual");
+  };
 
   const persistKey = !sim ? `${props.roomId}:${target.date}:${target.session}` : null;
   const { timeline, courses, phase } = useExamEngine(schedule, now, persistKey, handleEvent);
@@ -153,6 +167,7 @@ export function RoomController(props: RoomControllerProps) {
       <OfficialClock now={now} schedule={schedule} phase={phase} />
 
       <main className="max-w-5xl mx-auto w-full px-6 flex-1 flex flex-col gap-4 justify-center">
+        <NoteBoard note={notes.note} />
         {courses.map((c) => (
           <CourseCard key={c.course.course_id} state={c} now={now} />
         ))}
@@ -167,6 +182,9 @@ export function RoomController(props: RoomControllerProps) {
         onTestSound={() => void audio.engine.test()}
         onShowSlides={() => setSlides("manual")}
         onShowSeating={layout ? () => setSeatingOverride(true) : null}
+        onEditNote={() => setEditingNote(true)}
+        test={{ courses: schedule.courses, onTrigger: testEvent }}
+        noteVisible={notes.note.visible && !!notes.note.text}
         customAudio={{
           name: audio.customName,
           onPick: (f) => void audio.engine.setCustomStartFile(f),
@@ -185,10 +203,19 @@ export function RoomController(props: RoomControllerProps) {
       />
 
       {showSeating && layout && (
-        <SeatingOverlay layout={layout} now={now} schedule={schedule} phase={phase} autoMode={seatingOverride === null} onClose={() => setSeatingOverride(false)} />
+        <SeatingOverlay
+          layout={layout}
+          now={now}
+          schedule={schedule}
+          phase={phase}
+          note={notes.note}
+          autoMode={seatingOverride === null}
+          onClose={() => setSeatingOverride(false)}
+        />
       )}
       {showSlides && <InstructionSlides schedule={schedule} onClose={() => setSlides(null)} />}
       <AlertCenter alerts={alerts} onDismiss={dismissAlert} />
+      {editingNote && <NoteEditor note={notes.note} now={now} onSave={notes.save} onClose={() => setEditingNote(false)} />}
       {!audio.unlocked && <AudioUnlockGate roomCode={schedule.room_code} onUnlock={() => void audio.engine.unlock()} />}
     </div>
   );

@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef } from "react";
-import { LayoutGrid, Maximize, Music, Play, Presentation, Trash2, Volume2, VolumeX } from "lucide-react";
+import { useRef, useState } from "react";
+import { FlaskConical, LayoutGrid, Maximize, Megaphone, Music, Play, Presentation, Trash2, Volume2, VolumeX } from "lucide-react";
 import { formatClock } from "@/lib/time";
-import type { ExamEvent, RoomSchedule } from "@/lib/types";
+import type { Course, ExamEvent, RoomSchedule } from "@/lib/types";
 
 const EVENT_LABEL: Record<ExamEvent["type"], string> = {
   ROOM_OPEN: "เปิดห้อง",
@@ -26,6 +26,11 @@ interface Props {
   onTestSound: () => void;
   onShowSlides: () => void;
   onShowSeating: (() => void) | null;
+  onEditNote: () => void;
+  /** มีประกาศแสดงบนจออยู่ */
+  noteVisible: boolean;
+  /** แผงทดสอบสถานการณ์ (เสียง + popup) */
+  test: { courses: Course[]; onTrigger: (type: ExamEvent["type"], courseId?: string) => void };
   customAudio: { name: string | null; onPick: (file: File) => void; onPreview: () => void; onClear: () => void };
   sim: null | {
     schedule: RoomSchedule;
@@ -37,9 +42,11 @@ interface Props {
 }
 
 export function ControlBar(p: Props) {
+  const [testing, setTesting] = useState(false);
   return (
     <footer className="max-w-5xl mx-auto w-full px-6 py-6 flex flex-col gap-3 text-xs text-slate-400">
       {p.sim && <SimControls {...p.sim} />}
+      {testing && <TestPanel {...p.test} onClose={() => setTesting(false)} />}
 
       <div className="flex flex-wrap justify-between items-center gap-3">
         <div className="flex items-center gap-2">
@@ -56,9 +63,18 @@ export function ControlBar(p: Props) {
               <LayoutGrid className="w-3.5 h-3.5" /> ผังที่นั่ง
             </button>
           )}
+          <button onClick={p.onEditNote} className={`${btn} ${p.noteVisible ? "text-amber-700 border-amber-300" : "text-slate-600"}`}>
+            <Megaphone className="w-3.5 h-3.5" /> {p.noteVisible ? "แก้ประกาศ" : "ประกาศ / โน้ต"}
+          </button>
           <CustomAudio {...p.customAudio} />
           <button onClick={p.onShowSlides} className={`${btn} text-slate-600`}>
             <Presentation className="w-3.5 h-3.5" /> ระเบียบการสอบ
+          </button>
+          <button
+            onClick={() => setTesting((t) => !t)}
+            className={`${btn} ${testing ? "text-indigo-700 border-indigo-300 bg-indigo-50" : "text-slate-600"}`}
+          >
+            <FlaskConical className="w-3.5 h-3.5" /> ทดสอบสถานการณ์
           </button>
           <button onClick={p.onTestSound} className={`${btn} text-slate-600`}>
             <Volume2 className="w-3.5 h-3.5" /> ทดสอบเสียง
@@ -76,6 +92,30 @@ export function ControlBar(p: Props) {
         </div>
       </div>
     </footer>
+  );
+}
+
+/** กดยิงเหตุการณ์แต่ละช่วงทันที เพื่อทดสอบเสียงและ popup ก่อนสอบจริง (ไม่เปลี่ยนเวลา/สถานะของรอบสอบ) */
+function TestPanel({ courses, onTrigger, onClose }: Props["test"] & { onClose: () => void }) {
+  const tag = (c: Course) => (c.row_label ? ` (${c.row_label})` : courses.length > 1 ? ` ${c.course_code}` : "");
+  return (
+    <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40">
+      <span className="font-semibold text-indigo-600 mr-1">ทดสอบสถานการณ์</span>
+      <button onClick={() => onTrigger("ROOM_OPEN")} className={`${btn} text-indigo-600`}>เปิดห้อง (T-15)</button>
+      <button onClick={() => onTrigger("EXAM_START")} className={`${btn} text-indigo-600`}>เริ่มสอบ + ระเบียบ</button>
+      <button onClick={() => onTrigger("DEPARTURE_ALLOWED")} className={`${btn} text-indigo-600`}>ครบ 45 นาที</button>
+      {courses.map((c) => (
+        <button key={`w${c.course_id}`} onClick={() => onTrigger("COURSE_WARNING", c.course_id)} className={`${btn} text-indigo-600`}>
+          เหลือ 10 นาที{tag(c)}
+        </button>
+      ))}
+      {courses.map((c) => (
+        <button key={`e${c.course_id}`} onClick={() => onTrigger("COURSE_END", c.course_id)} className={`${btn} text-indigo-600`}>
+          หมดเวลา{tag(c)}
+        </button>
+      ))}
+      <button onClick={onClose} className={`${btn} text-slate-500 ml-auto`}>ปิด</button>
+    </div>
   );
 }
 

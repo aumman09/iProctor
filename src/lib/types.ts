@@ -107,7 +107,8 @@ export interface AuthUser {
   role: UserRole;
 }
 
-export type ExamPeriod = "Midterm 1/2026" | "Final 1/2026";
+/** ชื่อช่วงสอบ เช่น "Midterm 1/2026" (มาจากตาราง exam_periods) */
+export type ExamPeriod = string;
 export type DutyStatus = "UPCOMING" | "LIVE" | "COMPLETED";
 
 export interface ProctorDuty {

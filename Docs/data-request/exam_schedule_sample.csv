@@ -1,0 +1,6 @@
+﻿academic_year,term,exam_type,exam_date,session,course_start_time,course_end_time,building,room,course_code,course_name,section,seat_group,seat_color,student_count,student_id_from,student_id_to,staff_id,staff_name,staff_type,proctor_role
+2026,1,MIDTERM,10/8/2026,AFTERNOON,13:30,16:30,C3,107,1302301,Cruise Operations and Services,1,A,PINK/0,80,6731205017,6931205901,58123456,Aj. Prasit Meesook,LECTURER,HEAD
+2026,1,MIDTERM,10/8/2026,AFTERNOON,13:30,16:30,C3,107,1302301,Cruise Operations and Services,1,A,PINK/0,80,6731205017,6931205901,60111222,Somchai Jaidee,STAFF,ASSISTANT
+2026,1,MIDTERM,10/8/2026,AFTERNOON,13:30,15:30,C3,107,1501402,Professional Physical Therapy,1,B,WHITE/1,75,6532502003,6632502075,58123456,Aj. Prasit Meesook,LECTURER,HEAD
+2026,1,MIDTERM,10/8/2026,AFTERNOON,13:30,15:30,C3,107,1501402,Professional Physical Therapy,1,B,WHITE/1,75,6532502003,6632502075,60111222,Somchai Jaidee,STAFF,ASSISTANT
+2026,1,MIDTERM,10/9/2026,MORNING,9:00,11:00,C5,318,1003101,English for Communication,3,,WHITE/1,48,6831001001,6831001048,60111333,Malee Suksawat,STAFF,HEAD

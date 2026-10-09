@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { DoorOpen, Projector } from "lucide-react";
+import { ArrowLeft, ArrowRight, DoorOpen, Projector } from "lucide-react";
 import type { LayoutBox, RoomLayoutResponse, SeatColorTheme, Wall } from "@/lib/types";
 import { SEAT_THEME } from "./seat-theme";
 
@@ -28,8 +28,76 @@ const DOOR_POS: Record<Wall, (at: number) => CSSProperties> = {
   RIGHT: (at) => ({ right: 0, top: `${at * 100}%`, transform: "translate(50%, -50%)" }),
 };
 
-/** ผังที่นั่งตามแบบผังจริงของสำนักทะเบียน (โต๊ะ/เก้าอี้/ประตูตามตำแหน่งจริง) — หน้าห้องอยู่ด้านบนเสมอ (FR-03) */
-export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResponse; large?: boolean }) {
+/**
+ * ขนาดตัวเลขที่นั่ง (pt) — ใหญ่ที่สุดที่ยังอยู่ในโต๊ะ/เก้าอี้ที่ตัวเลขนั้นวางอยู่ (ไม่ทับกัน)
+ * ตัวเลขใหญ่ขึ้นได้ถึง 1.6 เท่าของต้นฉบับ แต่ไม่เล็กกว่าต้นฉบับ
+ */
+function fitLabelPt(layout: RoomLayoutResponse): number {
+  const base = layout.labelSize ?? 8;
+  let fit = base * 1.6;
+  const boxes = [...(layout.desks ?? []), ...(layout.chairs ?? [])];
+  for (const b of boxes) {
+    const inside = layout.seats.filter((s) => s.x >= b.x && s.x <= b.x + b.w && s.y >= b.y && s.y <= b.y + b.h);
+    if (!inside.length) continue;
+    const chars = Math.max(...inside.map((s) => s.id.length));
+    // ตัวเลขหนาประมาณ 0.62em ต่อหลัก; หลายเลขในโต๊ะเดียวแบ่งพื้นที่กัน (เรียงแนวนอน หรือซ้อนแนวตั้ง)
+    const ys = inside.map((s) => s.y);
+    const sideBySide = Math.max(...ys) - Math.min(...ys) < b.h * 0.25;
+    const n = inside.length;
+    fit = Math.min(fit, (sideBySide ? b.w / n : b.w) / (chars * 0.62), (sideBySide ? b.h : b.h / n) * 0.9);
+  }
+  return Math.max(base, fit);
+}
+
+/**
+ * หมุนผังกลับเป็นแนวกระดาษต้นฉบับ (ไวท์บอร์ดอยู่ด้านข้าง) — ผังในไฟล์ถูกหมุนให้หน้าห้องอยู่บน (ดู import_pdf.py)
+ * ใช้บนจอโปรเจกเตอร์กับห้องที่หมุนแล้วกลายเป็นแนวตั้ง จะได้ผังกว้างเต็มจอ ตัวเลขใหญ่ขึ้น
+ */
+function toPaperOrientation(l: RoomLayoutResponse): RoomLayoutResponse {
+  const front = l.source?.front;
+  if (front !== "LEFT" && front !== "RIGHT") return l;
+  const { w, h } = l.size; // บนกระดาษ: กว้าง = h, สูง = w
+  const W = h;
+  const H = w;
+  const pt = (x: number, y: number): [number, number] => (front === "LEFT" ? [y, w - x] : [h - y, x]);
+  const box = <T extends LayoutBox>(b: T): T => {
+    const [x0, y0] = pt(b.x, b.y);
+    const [x1, y1] = pt(b.x + b.w, b.y + b.h);
+    return { ...b, x: Math.min(x0, x1), y: Math.min(y0, y1), w: Math.abs(x1 - x0), h: Math.abs(y1 - y0) };
+  };
+  const doorPoint = (d: { wall: Wall; at: number }): [number, number] =>
+    d.wall === "TOP" ? [d.at * w, 0] : d.wall === "BOTTOM" ? [d.at * w, h] : d.wall === "LEFT" ? [0, d.at * h] : [w, d.at * h];
+  return {
+    ...l,
+    size: { w: W, h: H },
+    whiteboard: l.whiteboard && box(l.whiteboard),
+    desks: l.desks?.map(box),
+    chairs: l.chairs?.map(box),
+    seats: l.seats.map((s) => {
+      const [x, y] = pt(s.x, s.y);
+      return { ...s, x, y };
+    }),
+    rowLabels: l.rowLabels?.map((r) => {
+      const [x, y] = pt(r.x, r.y);
+      return { ...r, x, y };
+    }),
+    doors: l.doors.map((d) => {
+      const [x, y] = pt(...doorPoint(d));
+      const dist: Record<Wall, number> = { TOP: y, BOTTOM: H - y, LEFT: x, RIGHT: W - x };
+      const wall = (Object.keys(dist) as Wall[]).reduce((a, b) => (dist[a] <= dist[b] ? a : b));
+      return { wall, at: wall === "TOP" || wall === "BOTTOM" ? x / W : y / H };
+    }),
+  };
+}
+
+/**
+ * ผังที่นั่งตามแบบผังจริงของสำนักทะเบียน (โต๊ะ/เก้าอี้/ประตูตามตำแหน่งจริง) (FR-03)
+ * ปกติหน้าห้องอยู่ด้านบน; large (จอโปรเจกเตอร์) + ห้องแนวตั้ง → แสดงตามแนวกระดาษ ไวท์บอร์ดอยู่ด้านข้าง
+ */
+export function SeatingChart({ layout: input, large = false }: { layout: RoomLayoutResponse; large?: boolean }) {
+  const paper = large && input.size.h > input.size.w && (input.source?.front === "LEFT" || input.source?.front === "RIGHT");
+  const layout = paper ? toPaperOrientation(input) : input;
+  const front: Wall = paper ? input.source!.front : "TOP";
   const { w, h } = layout.size;
   const groups = new Map(layout.groups.map((g) => [g.key, g]));
   const seatGroup = new Map(layout.seats.map((s) => [s.id, groups.get(s.group)]));
@@ -43,10 +111,8 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
     width: `${(b.w / w) * 100}%`,
     height: `${(b.h / h) * 100}%`,
   });
-  const labelPt = (layout.labelSize ?? 8) * 1.15;
+  const labelPt = fitLabelPt(layout);
   const labelCqw = (labelPt / w) * 100;
-  // ตัวเลขต้องไม่เล็กกว่า ~11px → ความกว้างขั้นต่ำของห้องบนจอ (เกินจอแล้วเลื่อนแนวนอนได้)
-  const minWidthPx = Math.round((11 * 100) / labelCqw);
   // ป้ายแถวอาจอยู่นอกผนัง → เผื่อขอบซ้าย/ขวาให้พอ (k = ส่วนที่ล้น / ความกว้างห้อง)
   const overflow = Math.max(
     0,
@@ -56,23 +122,36 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
   const sidePad = k > 0 ? `${((k / (1 + 2 * k)) * 100).toFixed(2)}%` : "1rem";
 
   return (
-    <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 md:p-6">
-      {layout.title && (
-        <h3 className={`text-center font-semibold text-slate-900 mb-3 ${large ? "text-xl" : "text-base"}`}>{layout.title}</h3>
-      )}
+    <div
+      className={`w-full rounded-2xl border border-slate-200 bg-white ${large ? "flex h-full min-h-0 flex-col p-4" : "p-4 md:p-6"}`}
+    >
+      {layout.title && !large && <h3 className="text-center text-base font-semibold text-slate-900 mb-3">{layout.title}</h3>}
 
-      <div className="overflow-x-auto overflow-y-hidden py-4">
+      {/*
+        ห้ามมีแถบเลื่อน: ผังทั้งห้องต้องอยู่ในจอเดียว (ฉายให้นักศึกษาดูก่อนสอบ) — ย่อให้พอดีทั้งกว้างและสูง
+        large: วัดพื้นที่ที่เหลือจริงด้วย container query (cqw/cqh) · หน้าเว็บ: ใช้ความสูงจอหักหัวเรื่อง (~240px)
+        2.25rem = ป้าย "หน้าห้อง" เหนือกรอบห้อง
+      */}
+      <div className={large ? "min-h-0 flex-1 py-4" : "py-4"} style={large ? { containerType: "size" } : undefined}>
         <div
           className="mx-auto"
           style={{
             paddingInline: sidePad,
-            // จอโปรเจกเตอร์: ใช้ความสูงที่เหลือใต้นาฬิกา (~360px) ให้ผังทั้งห้องอยู่ในจอเดียว
-            width: large ? `min(100%, calc((100vh - 360px) * ${((w / h) * (1 + 2 * k)).toFixed(3)}))` : "100%",
-            minWidth: large ? undefined : minWidthPx,
+            width: large
+              ? `min(100cqw, calc((100cqh - 2.25rem) * ${((w / h) * (1 + 2 * k)).toFixed(3)}))`
+              : `min(100%, calc((100vh - 240px) * ${((w / h) * (1 + 2 * k)).toFixed(3)}))`,
           }}
         >
-          <div className={`mb-2 flex items-center justify-center gap-1.5 font-medium text-slate-500 ${text}`}>
+          <div
+            className={`mb-2 flex items-center gap-1.5 font-medium text-slate-500 ${text} ${
+              front === "LEFT" ? "justify-start" : front === "RIGHT" ? "justify-end" : "justify-center"
+            }`}
+          >
+            {front === "LEFT" && <ArrowLeft className="w-4 h-4" />}
             <Projector className="w-4 h-4" /> หน้าห้อง (ไวท์บอร์ด)
+            {front === "LEFT" && " อยู่ด้านซ้าย"}
+            {front === "RIGHT" && " อยู่ด้านขวา"}
+            {front === "RIGHT" && <ArrowRight className="w-4 h-4" />}
           </div>
 
           <div
@@ -144,7 +223,11 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
         </div>
       </div>
 
-      <ul className={`mt-4 grid gap-2 border-t border-slate-100 pt-4 text-slate-600 ${large ? "text-sm sm:grid-cols-2" : "text-xs"}`}>
+      <ul
+        className={`border-t border-slate-100 text-slate-600 ${
+          large ? "flex shrink-0 flex-wrap justify-center gap-x-6 gap-y-1 pt-3 text-base" : "mt-4 grid gap-2 pt-4 text-xs"
+        }`}
+      >
         {layout.groups.map((g) => {
           const nums = layout.seats.filter((s) => s.group === g.key).map((s) => numberOf(s.id));
           return (

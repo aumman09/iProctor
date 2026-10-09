@@ -1,0 +1,20 @@
+# ฐานข้อมูลสำหรับพัฒนา: docker compose up -d
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: iproctor
+      POSTGRES_PASSWORD: iproctor
+      POSTGRES_DB: iproctor
+      TZ: Asia/Bangkok
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - iproctor-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iproctor"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  iproctor-db:

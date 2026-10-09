@@ -10,7 +10,7 @@ export function OfficialClock({ now, schedule, phase, compact = false }: { now: 
       <span className="text-[10px] lg:text-xs font-bold tracking-[0.25em] text-slate-400 uppercase">
         MFU Official Standard Time
       </span>
-      <div className={`font-num leading-none ${compact ? "text-6xl md:text-8xl" : "text-7xl md:text-9xl lg:text-[11rem]"} font-extralight tracking-tight text-slate-950 my-2`}>
+      <div className={`font-num leading-none ${compact ? "text-[clamp(2.5rem,19cqw,6rem)]" : "text-7xl md:text-9xl lg:text-[11rem]"} font-extralight tracking-tight text-slate-950 my-2`}>
         {formatClock(now)}
       </div>
       <div className="text-xs lg:text-sm text-slate-400 font-medium">

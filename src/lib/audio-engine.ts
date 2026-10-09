@@ -21,11 +21,9 @@ const FALLBACK_CHIMES: Record<AudioCue, Note[]> = {
     { freq: 659.25, dur: 0.4, delay: 0.25 },
     { freq: 523.25, dur: 0.8, delay: 0.5 },
   ],
-  departure: [
-    { freq: 523.25, dur: 0.3, delay: 0 },
-    { freq: 659.25, dur: 0.5, delay: 0.2 },
-  ],
-  warning: [{ freq: 659.25, dur: 0.45, delay: 0 }],
+  // ครบ 45 นาที / เหลือ 10 นาที: กระดิ่งครั้งเดียว (ไม่มีเสียงพูด) — คนละระดับเสียงให้แยกออก
+  departure: [{ freq: 783.99, dur: 1.2, delay: 0 }],
+  warning: [{ freq: 659.25, dur: 1.2, delay: 0 }],
   timeout: [
     { freq: 440, dur: 0.7, delay: 0 },
     { freq: 440, dur: 0.7, delay: 0.9 },
@@ -80,6 +78,8 @@ class AudioEngine {
   }
 
   enqueue(cue: AudioCue) {
+    // เหตุการณ์เดียวกันพร้อมกันหลายวิชา (เช่น 2 วิชาเหลือ 10 นาทีพร้อมกัน) → เล่นครั้งเดียว
+    if (this.queue.includes(cue) || this.current === cue) return;
     this.queue.push(cue);
     void this.drain();
   }
@@ -141,11 +141,17 @@ class AudioEngine {
         return buf;
       }
     }
-    try {
-      const res = await fetch(AUDIO_CUES[cue]);
-      if (res.ok) buf = await this.ctx.decodeAudioData(await res.arrayBuffer());
-    } catch {
-      buf = null; // ไม่มีไฟล์หรือถอดรหัสไม่ได้ → ใช้ chime สังเคราะห์
+    // ลองนามสกุลที่เบราว์เซอร์ถอดเสียงได้ตามลำดับ (เช่น chime_timeout.mp3 → .m4a → .mp4 → .wav)
+    const base = AUDIO_CUES[cue].replace(/\.[a-z0-9]+$/i, "");
+    for (const url of [...new Set([AUDIO_CUES[cue], `${base}.m4a`, `${base}.mp4`, `${base}.wav`])]) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        buf = await this.ctx.decodeAudioData(await res.arrayBuffer());
+        break;
+      } catch {
+        buf = null; // ถอดรหัสไม่ได้ → ลองไฟล์ถัดไป / ใช้ chime สังเคราะห์
+      }
     }
     this.buffers.set(cue, buf);
     return buf;

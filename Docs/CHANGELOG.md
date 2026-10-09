@@ -19,7 +19,28 @@
 - ผังที่นั่งแสดงเป็นโต๊ะ/เก้าอี้ตามผังจริง: ตัวแปลงดึงโต๊ะ (สี่เหลี่ยมขาวที่มีเลขที่นั่ง), เก้าอี้ (รูปโค้ง; มีไอคอนคน = ที่นั่งสอบ), ไวท์บอร์ด เป็นพิกัดจริงหลังหมุน; `RoomLayoutResponse` เปลี่ยนจากกริดเป็น `size` + `seats/desks/chairs` (พิกัด pt) + `whiteboard`, `labelSize`, `rowLabels[{label,x,y}]`; `SeatingChart` วาดแบบ absolute ตามสัดส่วนห้อง (ตัวอักษรใช้ cqw, จอเล็กเลื่อนแนวนอน, จอโปรเจกเตอร์ใช้ความสูงที่เหลือใต้นาฬิกา) เก้าอี้ที่ใช้ระบายสีตามกลุ่ม เก้าอี้ว่างเป็นเส้นประ; แปลง C3-101/C3-107 เป็นรูปแบบใหม่ (ตำแหน่งประมาณ)
 - ตัวแปลง PDF ผังที่นั่งของสำนักทะเบียน → JSON: `scripts/seating/import_pdf.py` (PyMuPDF) อ่านชื่อห้อง, ที่นั่ง+พิกัด, สีชมพู/ขาว, ไวท์บอร์ด, ผนัง/ประตู, ป้าย "Row n" แล้วหมุนให้หน้าห้องอยู่บน; มีรายงานสิ่งที่ต้องตรวจ
 - ผังห้อง C5 ทั้ง 22 ห้อง (`data/seating/C5-*.json`) จาก `C5_20260927133423.pdf`
+### Added (ทดสอบสถานการณ์)
+- ปุ่ม "ทดสอบสถานการณ์" ใน `ControlBar` เปิดแผงยิงเหตุการณ์ทันที: เปิดห้อง (+ผังเต็มจอ), เริ่มสอบ (+ระเบียบการสอบ), ครบ 45 นาที, เหลือ 10 นาที / หมดเวลา แยกรายวิชา — เล่นเสียงและ popup จริง ไม่เปลี่ยนเวลา/สถานะรอบสอบ (`testEvent` ใน `RoomController`)
+### Changed (หมดเวลา / ไฟล์เสียง)
+- popup หมดเวลาเป็นภาษาอังกฤษ: "Time is up · Seat X · รหัสวิชา" + "Time is up. Please put down your pen and remain seated until all answer sheets are collected." (+ แจ้งกลุ่มที่ยังสอบต่อ) พร้อมเสียง `chime_timeout`
+- `AudioEngine.load` ลองไฟล์ .mp3 → .m4a → .mp4 → .wav ตามชื่อ cue (รองรับ `chime_timeout.mp4`)
+### Changed (ระเบียบการสอบ)
+- ระเบียบการสอบเป็นหน้าเดียว ภาษาอังกฤษ 7 ข้อตามประกาศ "Before the Exam Starts" พร้อมไอคอน (ข้อทุจริตเน้นสีแดง) (ไม่แสดงข้อปฏิบัติรายวิชา) ไม่หมุนสไลด์; ปิดปุ่ม "N" ของ Next.js ตอน dev (`devIndicators: false` ใน `next.config.ts`) ขนาดตัวอักษรตามความสูงจอ ไม่มีแถบเลื่อน; ตรงกับเสียง `02_exam_rules.mp3` — `src/components/InstructionSlides.tsx`
+### Changed (เสียง)
+- ครบ 45 นาที / เหลือ 10 นาที: กระดิ่งครั้งเดียว ไม่มีเสียงพูด (chime สังเคราะห์ 784 Hz / 659 Hz, 1.2 วินาที) ไม่ต้องมีไฟล์; `AudioEngine.enqueue` ไม่เล่นซ้ำเมื่อเหตุการณ์เดียวกันเกิดพร้อมกันหลายวิชา — `src/lib/audio-engine.ts`, `public/audio/README.md`
+### Added (Live Proctor Notes — FR-05.4)
+- ปุ่ม "ประกาศ / โน้ต" ใน `ControlBar` เปิดหน้าต่างพิมพ์ประกาศ (สูงสุด 500 ตัวอักษร, Ctrl+Enter = แสดงบนจอ, Esc = ปิด, ซ่อน/แสดงข้อความเดิม, ลบ) → กล่องประกาศสีเหลืองตัวใหญ่ระหว่างนาฬิกากับการ์ดรายวิชา และในผังที่นั่งเต็มจอ (ใต้นาฬิกา) — `src/components/ProctorNotes.tsx`
+- `useProctorNotes`: เก็บใน localStorage ของเครื่องฉาย key `notes:<ห้อง>:<วันที่>:<รอบ>` (โหมดจำลองต่อท้าย `:sim`) ไม่หายเมื่อรีเฟรช
+### Added (ฐานข้อมูล)
+- PostgreSQL 17 (`docker-compose.yml`, พอร์ต 5433) + Drizzle ORM: `src/lib/server/db/schema.ts` (staff, exam_periods, rooms, room_layouts, courses, exam_slots, slot_courses, proctor_assignments, import_runs), migration `drizzle/0000_init.sql`, `.env.example`
+- นำเข้าข้อมูล: `src/lib/server/import/batch.ts` (`ImportBatch` + `importBatch` แทนที่ทั้งช่วงสอบใน transaction, ข้ามห้องที่ไม่มีผัง/ผู้คุมสอบที่ไม่รู้จัก/แจ้งกลุ่มที่นั่งที่ไม่มีในผัง, สีป้ายใช้สีกลุ่มในผังเมื่อไม่ระบุ, บันทึก `import_runs`), `layouts.ts` (ผังห้องมีเวอร์ชัน, เทียบ JSON แบบเรียง key), `blendata.ts` (stub รอเอกสาร API)
+- สคริปต์ (tsx, `.mts`): `db:up`, `db:migrate`, `db:generate`, `db:layouts`, `db:seed` (ข้อมูลตัวอย่างอิงวันนี้ แทน mock เดิม), `db:setup`, `import:exam -- --file | --blendata`
+### Changed (ฐานข้อมูล)
+- `data-source.ts` อ่านจากฐานข้อมูลแทน mock: เวร (อาจารย์เห็นเฉพาะของตัวเอง, Admin/ค้นหาห้องเห็นทั้งหมด), ตารางรอบสอบ, my-assignment, ผังห้องเวอร์ชันปัจจุบัน, `getExamPeriods()`; `ExamPeriod` เป็น string และ portal โหลดรายการช่วงสอบจากฐานข้อมูล (ค่าเริ่มต้น = ช่วงที่ยังไม่จบ)
+- `SeatingOverlay` ใส่ชื่อวิชา/ช่วงรหัสของรอบนี้ลงคำอธิบายผัง (ผังจาก PDF ไม่มีชื่อวิชา); portal ซ่อน "· แถว" เมื่อเลขที่นั่งไม่มีตัวอักษรนำ
 ### Changed
+- จอโปรเจกเตอร์: ห้องที่หมุนแล้วกลายเป็นแนวตั้ง (ไวท์บอร์ดอยู่ซ้าย/ขวาในต้นฉบับ) แสดงตามแนวกระดาษต้นฉบับแทน (`toPaperOrientation` ใน `SeatingChart`) พร้อมป้าย "หน้าห้อง (ไวท์บอร์ด) อยู่ด้านซ้าย/ขวา" — ผังกว้างเต็มจอ ตัวเลขใหญ่ขึ้น (C5-302 บน 1080p: 9.7px → 14.9px); หน้าเว็บ /seating ยังหมุนให้หน้าห้องอยู่บน; `fitLabelPt` รองรับเลขที่ซ้อนแนวตั้งในโต๊ะเดียว
+- ผังที่นั่งต้องอยู่ในจอเดียวเสมอ ไม่มีแถบเลื่อน (ฉายให้นักศึกษาดูก่อนสอบ): `SeatingChart` โหมด large ย่อตามพื้นที่ที่เหลือจริงด้วย container query (`min(100cqw, (100cqh − ป้ายหน้าห้อง) × สัดส่วนห้อง)`), หน้าเว็บย่อตามความสูงจอ; ตัวเลขที่นั่งใหญ่ที่สุดที่ยังอยู่ในโต๊ะ/เก้าอี้ของตัวเอง (`fitLabelPt`); `SeatingOverlay` จอแนวนอนวางนาฬิกาด้านซ้าย ผังด้านขวาเต็มความสูง, นาฬิกา compact ย่อด้วย cqw (`OfficialClock`) — C3-107 บนจอ 1920×1080 กว้าง 1296px (เดิม 927), 1280×720 กว้าง 813px (เดิม 333)
 - `RoomLayoutResponse` เปลี่ยนเป็นพิกัดกริด: `grid`, `seats[{id,x,y,group}]`, `doors[{wall,at}]`, `rowLabels?`, `source?` (แทน `rows[].blocks` + `projectorPosition`/`doorPositions`) เพราะห้องจริงหันได้ทุกทิศและจัดโต๊ะต่างกัน; `groups[].courseName/studentIdRange` เป็น optional; แปลง `C3-101`, `C3-107` เป็นรูปแบบใหม่
 - `SeatingChart` วาดตามพิกัด: กรอบห้อง, ไวท์บอร์ดด้านบน, ทางเดินแคบลง, ไอคอนประตูบนผนังตามตำแหน่งจริง, คำอธิบายกลุ่มพร้อมจำนวนที่นั่ง; `useRoomLayout` ตรวจ cache ด้วย `seats`
 - README.md เขียนใหม่ให้ตรงกับ v2: flow login → portal → room/seating, ตารางหน้าและสิทธิ์ login, ไทม์ไลน์หน้าจอคุมสอบ, โหมดจำลองเวลา, ข้อมูลที่ต้องเตรียม (ผังที่นั่ง/เสียง), โครงสร้างโปรเจกต์, งานค้าง
@@ -34,7 +55,7 @@
 - `/` redirect ไป `/portal` หรือ `/login` (เดิมพาเข้าห้องสอบตรง ๆ)
 - `data-source.ts`: เพิ่ม `getProctorDuties`, `getRoomLayout` (mock)
 ### Known gaps
-- FR-01.1 SSO จริง, FR-05.4 Live Proctor Notes, อัปโหลดเสียงขึ้น server — ดู HANDOFF.md
+- FR-01.1 SSO จริง, Blendata API, อัปโหลดเสียงขึ้น server — ดู HANDOFF.md
 
 ## 2026-xx — Scaffold (commit d31b9b7)
 - v1: หน้าจอโปรเจกเตอร์ `/room/[roomId]`, state machine, Web Worker timer, audio engine, โหมดจำลองเวลา
