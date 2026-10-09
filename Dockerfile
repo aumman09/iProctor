@@ -12,11 +12,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL=postgres://build:build@localhost:5432/build
 RUN npm run build
 
-# ใช้รัน migrate / โหลดผัง / seed (ต้องมี devDependencies: tsx)
+# ใช้รัน migrate + โหลดผังห้อง (ต้องมี devDependencies: tsx) — ไม่ใส่ข้อมูลตัวอย่าง
+# ต้องการข้อมูลตัวอย่าง: docker compose -f docker-compose.beta.yml --profile setup run --rm setup npm run db:seed
 FROM build AS tools
 ENV TZ=Asia/Bangkok
 RUN touch .env
-CMD ["sh", "-c", "npm run db:migrate && npm run db:layouts && npm run db:seed"]
+CMD ["sh", "-c", "npm run db:migrate && npm run db:layouts"]
 
 FROM node:22-alpine AS runner
 WORKDIR /app

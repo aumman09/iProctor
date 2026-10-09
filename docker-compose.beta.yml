@@ -38,7 +38,7 @@ services:
       timeout: 5s
       retries: 3
 
-  # one-off: docker compose --profile setup run --rm setup  (migrate + โหลดผังห้อง + seed ตัวอย่าง; รันซ้ำได้)
+  # one-off: docker compose --profile setup run --rm setup  (migrate + โหลดผังห้อง ไม่มีข้อมูลตัวอย่าง; รันซ้ำได้)
   setup:
     profiles: ["setup"]
     build:
