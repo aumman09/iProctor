@@ -18,6 +18,13 @@ export const TIMING = {
   resyncEveryMin: 10,
 };
 
+/** ค่าเริ่มต้นของเวลาแจ้งเตือน — Admin เปลี่ยนได้ที่ /admin/settings (เก็บในตาราง app_settings) */
+export const DEFAULT_ALERT_TIMING = {
+  roomOpenBeforeMin: TIMING.roomOpenBeforeMin,
+  departureAfterMin: TIMING.departureAfterMin,
+  warningsBeforeEndMin: [TIMING.warningBeforeEndMin],
+};
+
 /** รายการไฟล์เสียง — วางไฟล์จริงไว้ที่ public/audio/ (ถ้าไม่มีไฟล์ ระบบจะเล่นเสียง chime สังเคราะห์แทน) */
 export const AUDIO_CUES = {
   welcome: "/audio/01_welcome_entry.mp3", // T-15 เปิดห้อง / ประกาศต้อนรับ

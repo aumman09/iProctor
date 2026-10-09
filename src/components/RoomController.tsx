@@ -7,10 +7,12 @@ import { useOfficialTimer, type SimClock } from "@/hooks/useOfficialTimer";
 import { useProctorNotes } from "@/hooks/useProctorNotes";
 import { useRoomLayout } from "@/hooks/useRoomLayout";
 import { useRoomSchedule } from "@/hooks/useRoomSchedule";
+import { timingOf } from "@/lib/schedule-engine";
 import { guessSession, parseSimStart, shortTime, todayISO } from "@/lib/time";
 import type { ExamEvent, SessionName } from "@/lib/types";
 import { AlertCenter, type Alert } from "./AlertCenter";
 import { AudioUnlockGate } from "./AudioUnlockGate";
+import { CompletionDialog } from "./CompletionDialog";
 import { ControlBar } from "./ControlBar";
 import { CourseCard } from "./CourseCard";
 import { Header } from "./Header";
@@ -31,6 +33,8 @@ export interface RoomControllerProps {
   sim?: string;
   /** ?speed=1|10|60 ความเร็วเวลาจำลอง */
   speed?: number;
+  /** ?demo=1 ใช้ตารางจำลองถ้าห้องนี้ไม่มีรอบสอบจริง */
+  demo?: boolean;
 }
 
 export function RoomController(props: RoomControllerProps) {
@@ -47,7 +51,7 @@ export function RoomController(props: RoomControllerProps) {
   const target = init.target;
   const [sim, setSim] = useState<SimClock | null>(init.sim);
 
-  const { schedule, source, error } = useRoomSchedule(props.roomId, target.date, target.session);
+  const { schedule, source, error } = useRoomSchedule(props.roomId, target.date, target.session, props.demo);
   const { now, offsetMs, synced } = useOfficialTimer(sim);
   const audio = useAudioEngine();
   const layout = useRoomLayout(props.roomId);
@@ -56,6 +60,9 @@ export function RoomController(props: RoomControllerProps) {
   // FR-05.4 ประกาศของกรรมการ — เก็บในเครื่องฉาย แยกตามห้อง/วัน/รอบ (โหมดจำลองแยก key ไม่ปนของจริง)
   const notes = useProctorNotes(`${props.roomId}:${target.date}:${target.session}${sim ? ":sim" : ""}`);
   const [editingNote, setEditingNote] = useState(false);
+  // สถานะ "สอบเสร็จ" ที่กดในหน้านี้ (ทับค่าจาก schedule) + รายวิชาที่กำลังยืนยัน
+  const [completion, setCompletion] = useState<Record<string, string | null>>({});
+  const [confirming, setConfirming] = useState<string | null>(null);
 
   const { engine: audioEngine } = audio;
   useEffect(() => {
@@ -109,7 +116,7 @@ export function RoomController(props: RoomControllerProps) {
             id: ev.id,
             kind: "warning",
             variant: "toast",
-            title: `เหลือเวลาอีก 10 นาที (แถว ${course?.row_label})`,
+            title: `เหลือเวลาอีก ${ev.minutesLeft ?? timingOf(schedule).warningsBeforeEndMin[0] ?? 10} นาที${course?.row_label ? ` (แถว ${course.row_label})` : ""}`,
             description: `${courseLabel} จะหมดเวลาสอบเมื่อ ${course ? shortTime(course.end_time) : ""} น. กรุณาตรวจสอบชื่อและรหัสนักศึกษา`,
           });
           break;
@@ -157,19 +164,53 @@ export function RoomController(props: RoomControllerProps) {
     );
   }
 
+  const completedAt = (courseId: string) =>
+    courseId in completion ? completion[courseId] : (schedule.courses.find((c) => c.course_id === courseId)?.completed_at ?? null);
+  const confirmingCourse = confirming ? schedule.courses.find((c) => c.course_id === confirming) : undefined;
+
+  /** บันทึกสถานะสอบเสร็จที่เซิร์ฟเวอร์ — คืนข้อความ error (ภาษาอังกฤษ) หรือ null */
+  const saveCompletion = async (courseId: string, completed: boolean): Promise<string | null> => {
+    // ตารางจำลอง (demo) ไม่มีในฐานข้อมูล → เปลี่ยนสถานะเฉพาะบนจอ
+    if (courseId.startsWith("demo-")) {
+      setCompletion((prev) => ({ ...prev, [courseId]: completed ? new Date(now).toISOString() : null }));
+      return null;
+    }
+    try {
+      const res = await fetch(`/api/v1/slot-courses/${encodeURIComponent(courseId)}/completion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed }),
+      });
+      if (res.status === 401) return "Please sign in to the iProctor portal on this computer first, then try again.";
+      if (res.status === 403) return "You are not assigned as a proctor for this exam room.";
+      if (!res.ok) return `Could not save (HTTP ${res.status}). Please try again.`;
+      const data = (await res.json()) as { completed_at: string | null };
+      setCompletion((prev) => ({ ...prev, [courseId]: data.completed_at }));
+      return null;
+    } catch {
+      return "Network error — please check the connection and try again.";
+    }
+  };
+
   const showSeating = !!layout && (seatingOverride ?? phase === "PRE_EXAM");
   const showSlides = slides === "manual" || (slides === "auto" && phase === "INSTRUCTION");
 
   return (
     <div className="min-h-screen flex flex-col justify-between select-none">
-      <Header roomCode={schedule.room_code} status={sim ? "simulation" : source === "cache" ? "offline" : "active"} />
+      <Header roomCode={schedule.room_code} status={sim || props.demo ? "simulation" : source === "cache" ? "offline" : "active"} />
 
       <OfficialClock now={now} schedule={schedule} phase={phase} />
 
       <main className="max-w-5xl mx-auto w-full px-6 flex-1 flex flex-col gap-4 justify-center">
         <NoteBoard note={notes.note} />
         {courses.map((c) => (
-          <CourseCard key={c.course.course_id} state={c} now={now} />
+          <CourseCard
+            key={c.course.course_id}
+            state={c}
+            now={now}
+            completedAt={completedAt(c.course.course_id)}
+            onToggleComplete={() => setConfirming(c.course.course_id)}
+          />
         ))}
       </main>
 
@@ -215,6 +256,14 @@ export function RoomController(props: RoomControllerProps) {
       )}
       {showSlides && <InstructionSlides schedule={schedule} onClose={() => setSlides(null)} />}
       <AlertCenter alerts={alerts} onDismiss={dismissAlert} />
+      {confirmingCourse && (
+        <CompletionDialog
+          course={confirmingCourse}
+          undo={!!completedAt(confirmingCourse.course_id)}
+          onConfirm={() => saveCompletion(confirmingCourse.course_id, !completedAt(confirmingCourse.course_id))}
+          onClose={() => setConfirming(null)}
+        />
+      )}
       {editingNote && <NoteEditor note={notes.note} now={now} onSave={notes.save} onClose={() => setEditingNote(false)} />}
       {!audio.unlocked && <AudioUnlockGate roomCode={schedule.room_code} onUnlock={() => void audio.engine.unlock()} />}
     </div>

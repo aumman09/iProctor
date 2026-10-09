@@ -1,0 +1,55 @@
+# iProctor MFU - Beta (เซิร์ฟเวอร์ UAT 192.168.11.90 เครื่องเดียวกับ PTS — ไม่ยุ่งกับ container อื่น)
+# ชื่อ project / network / volume / container ขึ้นต้นด้วย iproctor-beta ทั้งหมด
+name: iproctor-beta
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: iproctor-beta-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: iproctor
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      POSTGRES_DB: iproctor
+      TZ: Asia/Bangkok
+    volumes:
+      - iproctor-beta-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iproctor"]
+      interval: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      target: runner
+    image: iproctor-beta-web:latest
+    container_name: iproctor-beta-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://iproctor:${DB_PASSWORD}@db:5432/iproctor
+    ports:
+      - "192.168.11.90:${IPROCTOR_PORT:-8098}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/login"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # one-off: docker compose --profile setup run --rm setup  (migrate + โหลดผังห้อง + seed ตัวอย่าง; รันซ้ำได้)
+  setup:
+    profiles: ["setup"]
+    build:
+      context: .
+      target: tools
+    image: iproctor-beta-tools:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://iproctor:${DB_PASSWORD}@db:5432/iproctor
+
+volumes:
+  iproctor-beta-db:

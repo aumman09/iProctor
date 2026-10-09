@@ -13,7 +13,7 @@ interface State {
 }
 
 /** ดึงตารางสอบของห้อง — ถ้าเครือข่ายล่มจะใช้ข้อมูลที่ cache ไว้ล่าสุด */
-export function useRoomSchedule(roomId: string, date: string | null, session: SessionName | null) {
+export function useRoomSchedule(roomId: string, date: string | null, session: SessionName | null, demo = false) {
   const [state, setState] = useState<State>({ schedule: null, source: null, error: null });
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export function useRoomSchedule(roomId: string, date: string | null, session: Se
 
     (async () => {
       try {
-        const url = `/api/v1/exam-rooms/${encodeURIComponent(roomId)}/schedule?date=${date}&session=${session}`;
+        const url = `/api/v1/exam-rooms/${encodeURIComponent(roomId)}/schedule?date=${date}&session=${session}${demo ? "&demo=1" : ""}`;
         const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
         if (!res.ok) throw new Error(res.status === 404 ? "ไม่พบห้องสอบนี้" : `HTTP ${res.status}`);
         const schedule = (await res.json()) as RoomSchedule;
@@ -38,7 +38,7 @@ export function useRoomSchedule(roomId: string, date: string | null, session: Se
     })();
 
     return () => ctrl.abort();
-  }, [roomId, date, session]);
+  }, [roomId, date, session, demo]);
 
   return state;
 }

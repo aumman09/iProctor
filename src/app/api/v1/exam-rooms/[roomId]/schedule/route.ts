@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
-import { getRoomSchedule } from "@/lib/server/data-source";
+import { getCurrentUser } from "@/lib/server/auth";
+import { getDemoSchedule, getRoomSchedule } from "@/lib/server/data-source";
+import { logUsage } from "@/lib/server/usage";
 import type { SessionName } from "@/lib/types";
 
 // GET /api/v1/exam-rooms/{room_id}/schedule?date=YYYY-MM-DD&session=morning|afternoon
@@ -15,7 +17,13 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/v1/exam-room
     return Response.json({ error: "invalid session (morning|afternoon)" }, { status: 400 });
   }
 
-  const schedule = await getRoomSchedule(roomId, date, session as SessionName);
+  // ?demo=1 → ห้องที่ไม่มีรอบสอบจริงใช้ตารางจำลองจากผังห้อง (ทดสอบหน้าจอกับผังทุกห้อง)
+  const demo = req.nextUrl.searchParams.get("demo") === "1";
+  const real = await getRoomSchedule(roomId, date, session as SessionName);
+  const schedule = real ?? (demo ? await getDemoSchedule(roomId, date, session as SessionName) : null);
   if (!schedule) return Response.json({ error: "room not found" }, { status: 404 });
+  if (!real) return Response.json(schedule);
+  // dashboard: นับจำนวนครั้งที่เปิดหน้าจอคุมสอบ
+  await logUsage("ROOM_OPEN", { staffId: (await getCurrentUser())?.staff_id, roomId: roomId.toUpperCase(), meta: { date, session } });
   return Response.json(schedule);
 }

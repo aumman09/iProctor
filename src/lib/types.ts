@@ -26,6 +26,20 @@ export interface Course {
   end_time: string;
   duration_minutes: number;
   instructions?: string;
+  /** ข้อกำหนดเพิ่มเติมจาก Admin */
+  admin_note?: string;
+  /** ISO time ที่ผู้คุมสอบกดยืนยันว่าสอบเสร็จ (null = ยังไม่เสร็จ) */
+  completed_at?: string | null;
+}
+
+/** เวลาแจ้งเตือนที่ Admin ตั้งได้ (หน้า /admin/settings) */
+export interface AlertTiming {
+  /** เปิดห้อง/แสดงผังที่นั่งก่อนเริ่มสอบ (นาที) */
+  roomOpenBeforeMin: number;
+  /** อนุญาตให้ออกจากห้องหลังเริ่มสอบ (นาที) */
+  departureAfterMin: number;
+  /** เตือนก่อนหมดเวลารายวิชา (นาที) เช่น [10] หรือ [15, 5] */
+  warningsBeforeEndMin: number[];
 }
 
 export interface RoomSchedule {
@@ -40,6 +54,8 @@ export interface RoomSchedule {
   departure_allowed_at: string;
   proctors: Proctor[];
   courses: Course[];
+  /** ไม่มี (cache เก่า) = ใช้ค่าเริ่มต้นใน config.ts */
+  timing?: AlertTiming;
 }
 
 export interface MyAssignment {
@@ -95,6 +111,8 @@ export interface ExamEvent {
   /** epoch ms */
   at: number;
   courseId?: string;
+  /** COURSE_WARNING: เหลือกี่นาที */
+  minutesLeft?: number;
 }
 
 // ---------- v2: Portal / Seating / Auth (Docs/iproctor_mfu_technical_requirements.md §3) ----------

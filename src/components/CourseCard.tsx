@@ -1,4 +1,5 @@
-import { formatDuration, shortTime } from "@/lib/time";
+import { CircleCheck, Info } from "lucide-react";
+import { formatClock, formatDuration, shortTime } from "@/lib/time";
 import type { CourseState } from "@/lib/types";
 import { SEAT_THEME, STATUS_STYLE } from "./seat-theme";
 
@@ -8,7 +9,18 @@ function durationLabel(minutes: number) {
   return [h && `${h} Hour${h > 1 ? "s" : ""}`, m && `${m} Min`].filter(Boolean).join(" ");
 }
 
-export function CourseCard({ state, now }: { state: CourseState; now: number }) {
+export function CourseCard({
+  state,
+  now,
+  completedAt,
+  onToggleComplete,
+}: {
+  state: CourseState;
+  now: number;
+  /** ISO time ที่ยืนยันสอบเสร็จ (null = ยังไม่เสร็จ) */
+  completedAt: string | null;
+  onToggleComplete: () => void;
+}) {
   const { course, status, remainingMs, startAt } = state;
   const seat = SEAT_THEME[course.seat_color_theme] ?? SEAT_THEME.white;
   const style = STATUS_STYLE[status];
@@ -60,6 +72,42 @@ export function CourseCard({ state, now }: { state: CourseState; now: number }) 
             </span>
           )}
         </div>
+      </div>
+
+      {/* ข้อกำหนดเพิ่มเติมจาก Admin + ปุ่มยืนยันสอบเสร็จ */}
+      <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 md:flex-row md:items-center md:justify-between">
+        {course.admin_note ? (
+          <p className="flex min-w-0 items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 lg:text-base">
+            <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+            <span>
+              <span className="font-semibold">Exam Office note: </span>
+              {course.admin_note}
+            </span>
+          </p>
+        ) : (
+          <span />
+        )}
+        {completedAt ? (
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
+              <CircleCheck className="h-4 w-4" /> Completed · <span className="font-num">{formatClock(Date.parse(completedAt)).slice(0, 5)}</span>
+            </span>
+            <button onClick={onToggleComplete} className="text-xs text-slate-400 underline hover:text-slate-700">
+              Undo
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onToggleComplete}
+            className={`inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              status === "ended"
+                ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
+                : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <CircleCheck className="h-4 w-4" /> Mark as completed
+          </button>
+        )}
       </div>
     </article>
   );

@@ -4,12 +4,13 @@ import "server-only";
 // ดู src/lib/server/db/schema.ts และ src/lib/server/import/
 
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
-import { SESSIONS, TIMING } from "../config";
+import { SESSIONS } from "../config";
 import { addMinutes } from "../time";
 import type { AuthUser, Course, MyAssignment, ProctorDuty, RoomLayoutResponse, RoomSchedule, SessionName } from "../types";
 import { MOCK_USERS } from "./auth";
 import { db } from "./db";
 import { courses, examPeriods, examSlots, proctorAssignments, roomLayouts, rooms, slotCourses, staff } from "./db/schema";
+import { getAlertTiming } from "./settings";
 
 const BKK = "Asia/Bangkok";
 
@@ -41,6 +42,8 @@ async function coursesOfSlots(slotIds: number[]) {
       endTime: slotCourses.endTime,
       studentIdRange: slotCourses.studentIdRange,
       instructions: slotCourses.instructions,
+      adminNote: slotCourses.adminNote,
+      completedAt: slotCourses.completedAt,
     })
     .from(slotCourses)
     .innerJoin(courses, eq(courses.courseCode, slotCourses.courseCode))
@@ -67,7 +70,7 @@ export async function getRoomSchedule(roomId: string, date: string, session: Ses
     .where(and(eq(examSlots.roomId, roomId.toUpperCase()), eq(examSlots.examDate, date), eq(examSlots.session, session)));
   if (!slot) return null;
 
-  const [cs, ps] = await Promise.all([
+  const [cs, ps, timing] = await Promise.all([
     coursesOfSlots([slot.id]),
     db
       .select({ staffId: staff.staffId, name: staff.name, role: proctorAssignments.role })
@@ -75,6 +78,7 @@ export async function getRoomSchedule(roomId: string, date: string, session: Ses
       .innerJoin(staff, eq(staff.staffId, proctorAssignments.staffId))
       .where(eq(proctorAssignments.slotId, slot.id))
       .orderBy(asc(proctorAssignments.role)),
+    getAlertTiming(),
   ]);
 
   const { start, end } = SESSIONS[session];
@@ -86,7 +90,8 @@ export async function getRoomSchedule(roomId: string, date: string, session: Ses
     date,
     session_start: start,
     session_end: end,
-    departure_allowed_at: addMinutes(start, TIMING.departureAfterMin),
+    departure_allowed_at: addMinutes(start, timing.departureAfterMin),
+    timing,
     proctors: ps.map((p) => ({ staff_id: p.staffId, name: p.name, role: p.role === "HEAD" ? "Head Proctor" : "Proctor" })),
     courses: cs.map((c): Course => ({
       course_id: String(c.id),
@@ -101,6 +106,8 @@ export async function getRoomSchedule(roomId: string, date: string, session: Ses
       end_time: c.endTime,
       duration_minutes: minutesBetween(c.startTime, c.endTime),
       instructions: c.instructions ?? undefined,
+      admin_note: c.adminNote ?? undefined,
+      completed_at: c.completedAt?.toISOString() ?? null,
     })),
   };
 }
@@ -203,4 +210,71 @@ export async function getRoomLayout(roomId: string): Promise<RoomLayoutResponse 
     .from(roomLayouts)
     .where(and(eq(roomLayouts.roomId, roomId.toUpperCase()), eq(roomLayouts.isCurrent, true)));
   return row?.layout ?? null;
+}
+
+/**
+ * ผู้คุมสอบยืนยันว่ารายวิชาสอบเสร็จ/เก็บข้อสอบแล้ว (หรือยกเลิก)
+ * อนุญาต: Admin หรือผู้คุมสอบที่ได้รับมอบหมายในรอบนั้น
+ */
+export async function setCourseCompletion(user: AuthUser, slotCourseId: number, completed: boolean) {
+  const [row] = await db
+    .select({ id: slotCourses.id, slotId: slotCourses.slotId, roomId: examSlots.roomId, courseCode: slotCourses.courseCode })
+    .from(slotCourses)
+    .innerJoin(examSlots, eq(examSlots.id, slotCourses.slotId))
+    .where(eq(slotCourses.id, slotCourseId));
+  if (!row) return { ok: false as const, status: 404 };
+  if (user.role !== "admin") {
+    const [assigned] = await db
+      .select({ id: proctorAssignments.slotId })
+      .from(proctorAssignments)
+      .where(and(eq(proctorAssignments.slotId, row.slotId), eq(proctorAssignments.staffId, user.staff_id)));
+    if (!assigned) return { ok: false as const, status: 403 };
+  }
+  const [updated] = await db
+    .update(slotCourses)
+    .set(completed ? { completedAt: new Date(), completedBy: user.staff_id } : { completedAt: null, completedBy: null })
+    .where(eq(slotCourses.id, slotCourseId))
+    .returning({ completedAt: slotCourses.completedAt });
+  return { ok: true as const, roomId: row.roomId, courseCode: row.courseCode, completedAt: updated.completedAt?.toISOString() ?? null };
+}
+
+/**
+ * ตารางสอบจำลองจากผังห้อง (ใช้กับ ?demo=1) — ทุกห้องที่มีผังเปิดหน้าจอคุมสอบได้ แม้ไม่มีรอบสอบจริง
+ * กลุ่ม A = 3 ชม., กลุ่มอื่น = 2 ชม. · ไม่บันทึกอะไรลงฐานข้อมูล
+ */
+export async function getDemoSchedule(roomId: string, date: string, session: SessionName): Promise<RoomSchedule | null> {
+  const layout = await getRoomLayout(roomId);
+  if (!layout) return null;
+  const [building, ...rest] = layout.roomId.split("-");
+  const timing = await getAlertTiming();
+  const { start, end } = SESSIONS[session];
+  return {
+    room_code: `${building} ${rest.join("-")}`,
+    building,
+    room_number: rest.join("-"),
+    session,
+    date,
+    session_start: start,
+    session_end: end,
+    departure_allowed_at: addMinutes(start, timing.departureAfterMin),
+    timing,
+    proctors: [{ staff_id: "demo", name: "Demo Proctor", role: "Head Proctor" }],
+    courses: layout.groups.map((g, i): Course => {
+      const minutes = i === 0 ? 180 : 120;
+      return {
+        course_id: `demo-${g.key || "1"}`,
+        course_code: `DEMO-${g.key || "1"}`,
+        course_name: `Demo Course ${g.key || ""}`.trim(),
+        section: "1",
+        row_label: g.key,
+        seat_color_theme: g.colorTheme,
+        seat_description: g.key ? `Seat ${g.key}` : "",
+        student_id_range: "6700000001 - 6799999999",
+        start_time: start,
+        end_time: addMinutes(start, minutes),
+        duration_minutes: minutes,
+        completed_at: null,
+      };
+    }),
+  };
 }

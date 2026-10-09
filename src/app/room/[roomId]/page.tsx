@@ -3,6 +3,7 @@ import type { SessionName } from "@/lib/types";
 
 // หน้าจอฉายโปรเจกเตอร์ของห้องสอบ
 // ตัวอย่าง: /room/C3-107?session=afternoon&sim=13:14:50  (โหมดจำลองเวลาเพื่อซ้อม/ทดสอบ)
+// ห้องที่ไม่มีรอบสอบ: /room/C5-302?session=afternoon&sim=13:14:50&demo=1  (ตารางจำลองจากผังห้อง)
 export default async function RoomPage(props: PageProps<"/room/[roomId]">) {
   const { roomId } = await props.params;
   const sp = await props.searchParams;
@@ -19,6 +20,7 @@ export default async function RoomPage(props: PageProps<"/room/[roomId]">) {
       session={session === "morning" || session === "afternoon" ? (session as SessionName) : undefined}
       sim={one(sp.sim)}
       speed={Number.isFinite(speed) && speed > 0 ? speed : undefined}
+      demo={one(sp.demo) === "1"}
     />
   );
 }

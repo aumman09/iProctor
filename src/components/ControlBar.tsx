@@ -106,7 +106,7 @@ function TestPanel({ courses, onTrigger, onClose }: Props["test"] & { onClose: (
       <button onClick={() => onTrigger("DEPARTURE_ALLOWED")} className={`${btn} text-indigo-600`}>ครบ 45 นาที</button>
       {courses.map((c) => (
         <button key={`w${c.course_id}`} onClick={() => onTrigger("COURSE_WARNING", c.course_id)} className={`${btn} text-indigo-600`}>
-          เหลือ 10 นาที{tag(c)}
+          เตือนก่อนหมดเวลา{tag(c)}
         </button>
       ))}
       {courses.map((c) => (
@@ -126,7 +126,7 @@ function SimControls({ schedule, timeline, speed, onJump, onSpeed }: NonNullable
       <span className="font-semibold text-indigo-600 mr-1">โหมดจำลอง</span>
       {timeline.map((ev) => (
         <button key={ev.id} onClick={() => onJump(ev.at - 5000)} className={`${btn} text-indigo-600`}>
-          → {EVENT_LABEL[ev.type]}
+          → {ev.type === "COURSE_WARNING" && ev.minutesLeft ? `เตือน ${ev.minutesLeft} นาที` : EVENT_LABEL[ev.type]}
           {ev.courseId && ` (${rowOf(ev.courseId)})`}
           <span className="font-num text-slate-400">{formatClock(ev.at).slice(0, 5)}</span>
         </button>

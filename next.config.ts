@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   turbopack: { root: __dirname },
   // ซ่อนปุ่ม "N" ของ Next.js ตอน dev (ไม่ให้บังจอฉาย) — error ยังแสดงตามปกติ
   devIndicators: false,
+  // สำหรับ Docker image ขนาดเล็ก (รันด้วย node server.js)
+  output: "standalone",
 };
 
 export default nextConfig;

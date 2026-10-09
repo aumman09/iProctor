@@ -25,6 +25,16 @@ export const staffType = pgEnum("staff_type", ["LECTURER", "STAFF"]);
 export const proctorRole = pgEnum("proctor_role", ["HEAD", "ASSISTANT"]);
 export const seatColor = pgEnum("seat_color", ["pink", "white", "blue", "green", "yellow"]);
 export const importStatus = pgEnum("import_status", ["RUNNING", "SUCCESS", "FAILED"]);
+export const usageType = pgEnum("usage_type", [
+  "LOGIN",
+  "PORTAL_VIEW",
+  "ROOM_OPEN",
+  "SEATING_VIEW",
+  "COURSE_COMPLETED",
+  "COURSE_REOPENED",
+  "NOTE_UPDATED",
+  "SETTINGS_UPDATED",
+]);
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -123,6 +133,11 @@ export const slotCourses = pgTable(
     endTime: time("end_time").notNull(),
     studentIdRange: text("student_id_range"),
     instructions: text("instructions"),
+    /** ข้อกำหนดเพิ่มเติมจาก Admin — แสดงบนการ์ดรายวิชาในหน้าจอคุมสอบ (การนำเข้าไม่ทับ) */
+    adminNote: text("admin_note"),
+    /** ผู้คุมสอบกดยืนยันว่าสอบเสร็จ/เก็บข้อสอบแล้ว (การนำเข้าไม่ทับ) */
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    completedBy: text("completed_by").references(() => staff.staffId),
     ...timestamps,
   },
   (t) => [uniqueIndex("slot_courses_slot_course_section").on(t.slotId, t.courseCode, t.section)],
@@ -151,4 +166,26 @@ export const importRuns = pgTable("import_runs", {
   stats: jsonb("stats").$type<Record<string, number>>(),
   warnings: jsonb("warnings").$type<string[]>(),
   error: text("error"),
+});
+
+/** บันทึกการใช้งานสำหรับ dashboard ของ Admin */
+export const usageEvents = pgTable(
+  "usage_events",
+  {
+    id: serial("id").primaryKey(),
+    type: usageType("type").notNull(),
+    staffId: text("staff_id"),
+    roomId: text("room_id"),
+    meta: jsonb("meta").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("usage_events_type_created").on(t.type, t.createdAt)],
+);
+
+/** ค่าตั้งระบบที่ Admin แก้ได้ (เช่น เวลาแจ้งเตือน) */
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedBy: text("updated_by"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

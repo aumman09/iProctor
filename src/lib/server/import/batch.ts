@@ -115,8 +115,8 @@ export async function importBatch(db: DB, batch: ImportBatch, source: string) {
           .returning({ id: examSlots.id });
         keptSlotIds.push(slot.id);
 
-        // รายละเอียดรอบ: แทนที่ทั้งชุด
-        await tx.delete(slotCourses).where(eq(slotCourses.slotId, slot.id));
+        // ผู้คุมสอบ: แทนที่ทั้งชุด · วิชา: upsert ตาม (รอบ, วิชา, กลุ่มเรียน) เพื่อไม่ให้ note ของ Admin
+        // และสถานะ "สอบเสร็จ" หาย แล้วลบเฉพาะวิชาที่หายไปจากแหล่งข้อมูล
         await tx.delete(proctorAssignments).where(eq(proctorAssignments.slotId, slot.id));
 
         const courseValues = s.courses.flatMap((c) => {
@@ -135,7 +135,33 @@ export async function importBatch(db: DB, batch: ImportBatch, source: string) {
             instructions: c.instructions,
           }];
         });
-        if (courseValues.length) await tx.insert(slotCourses).values(courseValues);
+        const keptCourseIds: number[] = [];
+        for (const v of courseValues) {
+          const [row] = await tx
+            .insert(slotCourses)
+            .values(v)
+            .onConflictDoUpdate({
+              target: [slotCourses.slotId, slotCourses.courseCode, slotCourses.section],
+              set: {
+                seatGroup: v.seatGroup,
+                seatColor: v.seatColor,
+                startTime: v.startTime,
+                endTime: v.endTime,
+                studentIdRange: v.studentIdRange ?? null,
+                instructions: v.instructions ?? null,
+                updatedAt: now,
+              },
+            })
+            .returning({ id: slotCourses.id });
+          keptCourseIds.push(row.id);
+        }
+        await tx
+          .delete(slotCourses)
+          .where(
+            keptCourseIds.length
+              ? and(eq(slotCourses.slotId, slot.id), notInArray(slotCourses.id, keptCourseIds))
+              : eq(slotCourses.slotId, slot.id),
+          );
         courseRows += courseValues.length;
 
         const proctorValues = s.proctors.filter((p) => {

@@ -2,6 +2,13 @@
 
 รูปแบบ: ใหม่สุดอยู่บนสุด · ทุกครั้งที่แก้ระบบให้เพิ่มรายการที่นี่ (ระบุไฟล์สำคัญที่เกี่ยวข้อง)
 
+## [Unreleased] ? Deploy beta
+### Added
+- Deploy ???? beta: https://iproctor.beta.mfu.ac.th (??????????? 192.168.11.90, `/opt/iproctor-beta`)
+- `Dockerfile` (3 stage + stage `tools` ?????? migrate/seed), `docker-compose.beta.yml` (project `iproctor-beta`: db + web + setup), `.dockerignore`
+- `next.config.ts`: `output: "standalone"`
+- Nginx vhost `/etc/nginx/sites-available/iproctor.beta.mfu.ac.th.conf` ? proxy 192.168.11.90:8098 (cert wildcard ???????? PTS)
+
 ## [Unreleased] — 2026-10-06 — v2 scope (Portal, Seating, Custom Audio)
 ### Added
 - Mock Login (FR-01.2): `src/app/login/` (server action), `src/lib/server/auth.ts` (cookie `iproctor_session`)
@@ -19,6 +26,24 @@
 - ผังที่นั่งแสดงเป็นโต๊ะ/เก้าอี้ตามผังจริง: ตัวแปลงดึงโต๊ะ (สี่เหลี่ยมขาวที่มีเลขที่นั่ง), เก้าอี้ (รูปโค้ง; มีไอคอนคน = ที่นั่งสอบ), ไวท์บอร์ด เป็นพิกัดจริงหลังหมุน; `RoomLayoutResponse` เปลี่ยนจากกริดเป็น `size` + `seats/desks/chairs` (พิกัด pt) + `whiteboard`, `labelSize`, `rowLabels[{label,x,y}]`; `SeatingChart` วาดแบบ absolute ตามสัดส่วนห้อง (ตัวอักษรใช้ cqw, จอเล็กเลื่อนแนวนอน, จอโปรเจกเตอร์ใช้ความสูงที่เหลือใต้นาฬิกา) เก้าอี้ที่ใช้ระบายสีตามกลุ่ม เก้าอี้ว่างเป็นเส้นประ; แปลง C3-101/C3-107 เป็นรูปแบบใหม่ (ตำแหน่งประมาณ)
 - ตัวแปลง PDF ผังที่นั่งของสำนักทะเบียน → JSON: `scripts/seating/import_pdf.py` (PyMuPDF) อ่านชื่อห้อง, ที่นั่ง+พิกัด, สีชมพู/ขาว, ไวท์บอร์ด, ผนัง/ประตู, ป้าย "Row n" แล้วหมุนให้หน้าห้องอยู่บน; มีรายงานสิ่งที่ต้องตรวจ
 - ผังห้อง C5 ทั้ง 22 ห้อง (`data/seating/C5-*.json`) จาก `C5_20260927133423.pdf`
+### Added (Admin Panel & ยืนยันสอบเสร็จ)
+- Admin Panel `/admin` (เฉพาะ role admin, login Admin แล้วเข้าหน้านี้ทันที; portal มีปุ่ม Admin Panel): เมนูด้านซ้าย (มือถือเป็นแถบบน) — `src/app/admin/`, `src/components/admin/`
+  - ภาพรวม: รายวิชาส่งข้อสอบแล้ว x/y (+ แถบความคืบหน้า), รอบสอบที่ส่งครบ, เปิดหน้าจอคุมสอบวันนี้, ผู้ใช้งาน 7 วัน, รอบสอบวันนี้พร้อมสถานะรายวิชา, กราฟการใช้งานรายวัน 7 วัน, กิจกรรมล่าสุด
+  - รอบสอบ & รายวิชา: กรองช่วงสอบ/วันที่/รอบ/สถานะ/ค้นหา, สถานะส่งข้อสอบ (เวลา + ผู้กด) ตั้ง/ยกเลิกแทนได้, **ข้อกำหนดเพิ่มเติมรายวิชา** (แสดงบนการ์ดรายวิชาในหน้าจอคุมสอบ "Exam Office note")
+  - ห้องสอบ: 131 ห้องแยกอาคาร, ดูผัง, **จำลองหน้าจอ** (`/room/<ห้อง>?…&demo=1` ตารางจำลองจากผังห้อง — ห้องที่ไม่มีรอบสอบก็ทดสอบได้)
+  - เวลาแจ้งเตือน: เปิดห้องก่อนเริ่ม, ออกห้องหลังเริ่ม, เตือนก่อนหมดเวลา (เพิ่มได้สูงสุด 5 ค่า) + ตัวอย่างไทม์ไลน์ — เก็บใน `app_settings`, ส่งไปหน้าจอคุมสอบทาง `RoomSchedule.timing` (`schedule-engine` ใช้ค่าจากนี้)
+- หน้าจอคุมสอบ: ปุ่ม "Mark as completed" ต่อรายวิชา + popup ยืนยันภาษาอังกฤษ (`CompletionDialog`), แสดง "Completed · เวลา" และ Undo — API `POST /api/v1/slot-courses/{id}/completion` (ต้อง login: Admin หรือผู้คุมสอบของรอบนั้น)
+- Portal: ปุ่ม "เพิ่มลงปฏิทิน" (mockup: Google / Outlook / .ics ยังไม่เปิดใช้) — `AddToCalendarButton`
+- บันทึกการใช้งาน `usage_events` (login, portal, เปิดจอคุมสอบ, ดูผัง, ยืนยันสอบเสร็จ, แก้ข้อกำหนด/ตั้งค่า) — `src/lib/server/usage.ts`
+- ฐานข้อมูล: migration `0001_admin_completion` — `slot_courses.admin_note/completed_at/completed_by`, ตาราง `usage_events`, `app_settings`
+### Changed (Admin Panel)
+- นำเข้าข้อมูลช่วงสอบ upsert รายวิชาตาม (รอบ, วิชา, กลุ่มเรียน) แทนการลบแล้วสร้างใหม่ → ข้อกำหนดของ Admin และสถานะสอบเสร็จไม่หายเมื่อดึงซ้ำ
+- `db:seed` แต่ละรอบใช้ห้อง/ผังต่างกัน (C5-302, C2-402, C3-107, C5-318, E3B-101 ฯลฯ) + 10 รอบสอบวันนี้/พรุ่งนี้ให้ dashboard มีข้อมูล
+- ป้ายเตือนในโหมดจำลอง/popup ใช้จำนวนนาทีจริงตามการตั้งค่า
+### Added (footer)
+- `SiteFooter` ในหน้า login / portal / ผังที่นั่ง (ไม่แสดงบนจอฉายในห้องสอบ): "© 2026 Centre for Digital Technology and Information, Mae Fah Luang University" · "Developed by the iProctor Team · Inspired by School of Science, MFU"; แก้ line ending `
+
+` ที่เสียใน `portal/page.tsx`
 ### Added (ทดสอบสถานการณ์)
 - ปุ่ม "ทดสอบสถานการณ์" ใน `ControlBar` เปิดแผงยิงเหตุการณ์ทันที: เปิดห้อง (+ผังเต็มจอ), เริ่มสอบ (+ระเบียบการสอบ), ครบ 45 นาที, เหลือ 10 นาที / หมดเวลา แยกรายวิชา — เล่นเสียงและ popup จริง ไม่เปลี่ยนเวลา/สถานะรอบสอบ (`testEvent` ใน `RoomController`)
 ### Changed (หมดเวลา / ไฟล์เสียง)

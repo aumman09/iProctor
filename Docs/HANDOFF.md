@@ -16,7 +16,8 @@ Next.js 16 (App Router) · React 19 · Tailwind 4 · lucide-react · PostgreSQL 
 ```
 src/app/
   page.tsx                  redirect → /portal (login แล้ว) หรือ /login
-  login/                    Mock Login (server action, cookie `iproctor_session` = proctor|admin)
+  login/                    Mock Login (server action, cookie `iproctor_session` = proctor|admin) — Admin → /admin
+  admin/                    Admin Panel: ภาพรวม, รอบสอบ & รายวิชา (สถานะส่ง + ข้อกำหนด), ห้องสอบ (จำลองหน้าจอ), เวลาแจ้งเตือน; actions.ts ตรวจสิทธิ์ทุก action
   portal/                   FR-02 ตารางเวรคุมสอบ (period selector, ค้นหาห้อง, ปุ่ม Launch)
   room/[roomId]/            หน้าจอโปรเจกเตอร์ (client-only, RoomController)
   seating/[roomId]/         ผังที่นั่งรายห้อง (สาธารณะ, ปุ่ม "ดูผังที่นั่ง" ใน portal)
@@ -62,3 +63,11 @@ src/components/ RoomController (ตัวประกอบหลัก), Seatin
 3.1 ลบข้อมูลเก่าเกิน 1 ปีตามนโยบาย (เฉพาะข้อมูลส่วนบุคคล — เวรคุมสอบเก็บต่อได้) และเก็บ PDF ผังต้นฉบับใน MinIO (`room_layouts.source_url`)
 4. อัปโหลดเสียงขึ้น server + `customAudioUrl` ใน `ProctorDuty`
 5. เพิ่ม test (schedule-engine เป็น pure function ทดสอบง่าย)
+
+## Deployment (beta)
+- URL: https://iproctor.beta.mfu.ac.th ? host `192.168.11.90` (??? SSH user ?? `.env` ??? git-ignore) ? dir `/opt/iproctor-beta/{app,.env}`
+- Compose project `iproctor-beta` (container `iproctor-beta-web`, `iproctor-beta-db`, volume `iproctor-beta_iproctor-beta-db`) ? ?????? PTS/??????????????? ??????? `/opt/pts-beta` ??? vhost ????
+- Web ????? 192.168.11.90:8098 (PTS=8096) ? Nginx host ???? edge (vhost ??????, sudo ???????????)
+- `/opt/iproctor-beta/.env` (?????????????????????): `DB_PASSWORD`, `IPROCTOR_PORT`
+- Redeploy: tar ????? (?????? node_modules/.next/.git/.env) ? ????????????? `/opt/iproctor-beta/app` ? `docker compose -f docker-compose.beta.yml up -d --build` ? ??? schema/?????????? `docker compose -f docker-compose.beta.yml --profile setup run --rm setup`
+- Login ??????? Mock; seed ???????????? "??????" ??????? C3-107 (??? setup ?????????????????)
