@@ -10,7 +10,7 @@ import type { AuthUser, Course, MyAssignment, ProctorDuty, RoomLayoutResponse, R
 import { MOCK_USERS } from "./auth";
 import { db } from "./db";
 import { courses, examPeriods, examSlots, proctorAssignments, roomLayouts, rooms, slotCourses, staff } from "./db/schema";
-import { getAlertTiming } from "./settings";
+import { getAlertTiming, getRulesCues } from "./settings";
 
 const BKK = "Asia/Bangkok";
 
@@ -70,7 +70,7 @@ export async function getRoomSchedule(roomId: string, date: string, session: Ses
     .where(and(eq(examSlots.roomId, roomId.toUpperCase()), eq(examSlots.examDate, date), eq(examSlots.session, session)));
   if (!slot) return null;
 
-  const [cs, ps, timing] = await Promise.all([
+  const [cs, ps, timing, rulesCues] = await Promise.all([
     coursesOfSlots([slot.id]),
     db
       .select({ staffId: staff.staffId, name: staff.name, role: proctorAssignments.role })
@@ -79,6 +79,7 @@ export async function getRoomSchedule(roomId: string, date: string, session: Ses
       .where(eq(proctorAssignments.slotId, slot.id))
       .orderBy(asc(proctorAssignments.role)),
     getAlertTiming(),
+    getRulesCues(),
   ]);
 
   const { start, end } = SESSIONS[session];
@@ -92,6 +93,7 @@ export async function getRoomSchedule(roomId: string, date: string, session: Ses
     session_end: end,
     departure_allowed_at: addMinutes(start, timing.departureAfterMin),
     timing,
+    rules_cues: rulesCues,
     proctors: ps.map((p) => ({ staff_id: p.staffId, name: p.name, role: p.role === "HEAD" ? "Head Proctor" : "Proctor" })),
     courses: cs.map((c): Course => ({
       course_id: String(c.id),
@@ -246,7 +248,7 @@ export async function getDemoSchedule(roomId: string, date: string, session: Ses
   const layout = await getRoomLayout(roomId);
   if (!layout) return null;
   const [building, ...rest] = layout.roomId.split("-");
-  const timing = await getAlertTiming();
+  const [timing, rulesCues] = await Promise.all([getAlertTiming(), getRulesCues()]);
   const { start, end } = SESSIONS[session];
   return {
     room_code: `${building} ${rest.join("-")}`,
@@ -258,6 +260,7 @@ export async function getDemoSchedule(roomId: string, date: string, session: Ses
     session_end: end,
     departure_allowed_at: addMinutes(start, timing.departureAfterMin),
     timing,
+    rules_cues: rulesCues,
     proctors: [{ staff_id: "demo", name: "Demo Proctor", role: "Head Proctor" }],
     courses: layout.groups.map((g, i): Course => {
       const minutes = i === 0 ? 180 : 120;

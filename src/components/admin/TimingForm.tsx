@@ -21,15 +21,15 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
   const valid = (n: number, min: number, max: number) => Number.isInteger(n) && n >= min && n <= max;
   const sorted = [...new Set(warnings.filter((w) => valid(w, 1, 120)))].sort((a, b) => b - a);
   const preview = [
-    { time: at("13:30", -roomOpen), label: "เปิดห้อง · แสดงผังที่นั่ง · เสียงต้อนรับ" },
-    { time: "13:30", label: "เริ่มสอบ · ระเบียบการสอบ" },
-    { time: at("13:30", departure), label: "อนุญาตให้ออกจากห้อง (กระดิ่ง)" },
+    { time: at("13:30", -roomOpen), label: "Room open · seating plan · welcome audio" },
+    { time: "13:30", label: "Exam start · exam rules" },
+    { time: at("13:30", departure), label: "Leaving allowed (chime)" },
     ...sorted.flatMap((w) => [
-      { time: at("15:30", -w), label: `เหลือ ${w} นาที — วิชา 2 ชม.` },
-      { time: at("16:30", -w), label: `เหลือ ${w} นาที — วิชา 3 ชม.` },
+      { time: at("15:30", -w), label: `${w} min left — 2-hour course` },
+      { time: at("16:30", -w), label: `${w} min left — 3-hour course` },
     ]),
-    { time: "15:30", label: "หมดเวลา — วิชา 2 ชม." },
-    { time: "16:30", label: "หมดเวลา — วิชา 3 ชม." },
+    { time: "15:30", label: "Time up — 2-hour course" },
+    { time: "16:30", label: "Time up — 3-hour course" },
   ].sort((a, b) => a.time.localeCompare(b.time));
 
   const num = "w-24 rounded-xl border border-slate-200 px-3 py-2 text-right font-num text-sm focus:border-slate-400 focus:outline-none";
@@ -37,15 +37,15 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <form action={action} className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-3">
-        <Row label="เปิดห้องสอบก่อนเริ่ม" hint="แสดงผังที่นั่งเต็มจอ + เสียงต้อนรับ (0–120 นาที)">
+        <Row label="Open room before start" hint="Full-screen seating plan + welcome audio (0–120 min)">
           <input name="roomOpenBeforeMin" type="number" min={0} max={120} value={roomOpen} onChange={(e) => setRoomOpen(Number(e.target.value))} className={num} />
-          <span className="text-sm text-slate-500">นาที</span>
+          <span className="text-sm text-slate-500">min</span>
         </Row>
-        <Row label="อนุญาตให้ออกจากห้องหลังเริ่มสอบ" hint="popup + กระดิ่ง (0–240 นาที)">
+        <Row label="Allow leaving after start" hint="Popup + chime (0–240 min)">
           <input name="departureAfterMin" type="number" min={0} max={240} value={departure} onChange={(e) => setDeparture(Number(e.target.value))} className={num} />
-          <span className="text-sm text-slate-500">นาที</span>
+          <span className="text-sm text-slate-500">min</span>
         </Row>
-        <Row label="เตือนก่อนหมดเวลารายวิชา" hint="เพิ่มได้สูงสุด 5 ครั้ง (1–120 นาที) · กระดิ่งครั้งเดียวต่อครั้ง">
+        <Row label="Warn before a course ends" hint="Up to 5 warnings (1–120 min) · one chime each">
           <div className="flex flex-wrap items-center gap-2">
             {warnings.map((w, i) => (
               <span key={i} className="inline-flex items-center gap-1 rounded-xl border border-slate-200 py-1 pl-2 pr-1">
@@ -57,14 +57,14 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
                   value={w}
                   onChange={(e) => setWarnings((ws) => ws.map((x, j) => (j === i ? Number(e.target.value) : x)))}
                   className="w-14 bg-transparent text-right font-num text-sm focus:outline-none"
-                  aria-label={`เตือนครั้งที่ ${i + 1} (นาที)`}
+                  aria-label={`Warning ${i + 1} (minutes)`}
                 />
-                <span className="text-xs text-slate-400">นาที</span>
+                <span className="text-xs text-slate-400">min</span>
                 <button
                   type="button"
                   onClick={() => setWarnings((ws) => ws.filter((_, j) => j !== i))}
                   className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-rose-600"
-                  aria-label="ลบ"
+                  aria-label="Remove"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -76,16 +76,16 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
                 onClick={() => setWarnings((ws) => [...ws, 5])}
                 className="inline-flex items-center gap-1 rounded-xl border border-dashed border-slate-300 px-3 py-1.5 text-sm text-slate-500 hover:border-slate-400 hover:text-slate-900"
               >
-                <Plus className="h-4 w-4" /> เพิ่มเวลาเตือน
+                <Plus className="h-4 w-4" /> Add warning
               </button>
             )}
-            {warnings.length === 0 && <span className="text-sm text-slate-400">ไม่มีการเตือนก่อนหมดเวลา</span>}
+            {warnings.length === 0 && <span className="text-sm text-slate-400">No warnings before time is up</span>}
           </div>
         </Row>
 
         <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-5">
           <button disabled={pending} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
-            {pending ? "กำลังบันทึก…" : "บันทึก"}
+            {pending ? "Saving…" : "Save"}
           </button>
           <button
             type="button"
@@ -96,15 +96,15 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
             }}
             className="rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-100"
           >
-            คืนค่าเริ่มต้น (15 / 45 / 10)
+            Reset to defaults (15 / 45 / 10)
           </button>
           {state && <span className={`text-sm ${state.ok ? "text-emerald-600" : "text-rose-600"}`}>{state.message}</span>}
         </div>
       </form>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-2">
-        <h2 className="font-semibold text-slate-900">ตัวอย่างไทม์ไลน์</h2>
-        <p className="mt-0.5 text-xs text-slate-500">รอบบ่าย 13:30 · วิชา 3 ชม. และ 2 ชม. ในห้องเดียวกัน</p>
+        <h2 className="font-semibold text-slate-900">Timeline preview</h2>
+        <p className="mt-0.5 text-xs text-slate-500">Afternoon session 13:30 · a 3-hour and a 2-hour course in one room</p>
         <ol className="mt-4 space-y-0">
           {preview.map((p, i) => (
             <li key={i} className="relative flex gap-3 pb-4 pl-5 last:pb-0">

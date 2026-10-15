@@ -26,7 +26,7 @@ export function CourseNoteForm({ slotCourseId, note }: { slotCourseId: number; n
           className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
         >
           {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
-          {note ? "แก้ไข" : "เพิ่มข้อกำหนด"}
+          {note ? "Edit" : "Add note"}
         </button>
         {state?.ok && <span className="text-xs text-emerald-600">{state.message}</span>}
       </div>
@@ -41,17 +41,17 @@ export function CourseNoteForm({ slotCourseId, note }: { slotCourseId: number; n
         rows={2}
         maxLength={300}
         autoFocus
-        placeholder="เช่น Calculators are permitted. / Open book (1 A4 page)"
+        placeholder="e.g. Calculators are permitted. / Open book (1 A4 page)"
         className="w-full resize-none rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-amber-300 focus:outline-none focus:ring-4 focus:ring-amber-100"
       />
       <div className="flex items-center gap-2">
         <button disabled={pending} className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
-          {pending ? "กำลังบันทึก…" : "บันทึก"}
+          {pending ? "Saving…" : "Save"}
         </button>
         <button type="button" onClick={() => setEditing(false)} className="rounded-lg px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100">
-          ยกเลิก
+          Cancel
         </button>
-        <span className="text-xs text-slate-400">ว่าง = ลบข้อกำหนด · แสดงบนจอคุมสอบเมื่อโหลดหน้าใหม่</span>
+        <span className="text-xs text-slate-400">Empty = remove note · shown on the exam screen after a reload</span>
         {state && !state.ok && <span className="text-xs text-rose-600">{state.message}</span>}
       </div>
     </form>

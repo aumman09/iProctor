@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 /** ย้อนกลับหน้าก่อนหน้า ถ้าไม่มีประวัติ (เปิดตรง ๆ) ไปที่ fallback */
-export function BackButton({ fallback = "/portal", label = "ย้อนกลับ" }: { fallback?: string; label?: string }) {
+export function BackButton({ fallback = "/portal", label = "Back" }: { fallback?: string; label?: string }) {
   const router = useRouter();
   return (
     <button

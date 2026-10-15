@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/admin/ui";
 import { SEAT_THEME } from "@/components/seat-theme";
 import { listRoomsWithLayouts } from "@/lib/server/admin";
 
-const FRONT: Record<string, string> = { TOP: "บน", BOTTOM: "ล่าง", LEFT: "ซ้าย", RIGHT: "ขวา" };
+const FRONT: Record<string, string> = { TOP: "top", BOTTOM: "bottom", LEFT: "left", RIGHT: "right" };
 
 export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
   const sp = await props.searchParams;
@@ -17,8 +17,8 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
   return (
     <>
       <PageHeader
-        title="ห้องสอบ"
-        sub={`${all.length} ห้อง · ${buildings.length} อาคาร — ผังจาก PDF ของสำนักทะเบียน · กด “จำลองหน้าจอ” เพื่อทดสอบหน้าจอคุมสอบกับผังห้องนั้น`}
+        title="Exam rooms"
+        sub={`${all.length} rooms · ${buildings.length} buildings — layouts from the Registrar's PDFs · use “Demo screen” to test the exam screen with a room's layout`}
       />
 
       <form method="get" className="mb-6 flex flex-wrap items-center gap-2">
@@ -26,7 +26,7 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
           href="/admin/rooms"
           className={`rounded-full px-3 py-1.5 text-sm ${!building ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
         >
-          ทั้งหมด
+          All
         </Link>
         {buildings.map((b) => (
           <Link
@@ -40,7 +40,7 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
         <div className="relative ml-auto min-w-48">
           {building && <input type="hidden" name="b" value={building} />}
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input name="q" defaultValue={q} placeholder="ค้นหาห้อง" className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm" />
+          <input name="q" defaultValue={q} placeholder="Search room" className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm" />
         </div>
       </form>
 
@@ -53,14 +53,14 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
                   {r.building} {r.roomNumber}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {r.capacity} ที่นั่ง · ไวท์บอร์ด{FRONT[r.layout.source?.front ?? "TOP"]} · ประตู {r.layout.doors.length} · v{r.version}
+                  {r.capacity} seats · whiteboard {FRONT[r.layout.source?.front ?? "TOP"]} · {r.layout.doors.length} doors · v{r.version}
                 </p>
               </div>
               <div className="flex gap-1">
                 {r.layout.groups.map((g) => (
                   <span key={g.key} className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-xs text-slate-600">
                     <span className={`h-2 w-2 rounded-full ${SEAT_THEME[g.colorTheme].dot}`} />
-                    {g.key || "เลขล้วน"}
+                    {g.key || "Numbers"}
                   </span>
                 ))}
               </div>
@@ -70,19 +70,19 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
                 href={`/seating/${r.id}`}
                 className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2 text-sm text-slate-700 hover:bg-slate-50"
               >
-                <LayoutGrid className="h-4 w-4 text-slate-400" /> ดูผัง
+                <LayoutGrid className="h-4 w-4 text-slate-400" /> Seating
               </Link>
               <Link
                 href={`/room/${r.id}?session=afternoon&sim=13:14:45&speed=1&demo=1`}
                 className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800"
               >
-                <MonitorPlay className="h-4 w-4" /> จำลองหน้าจอ
+                <MonitorPlay className="h-4 w-4" /> Demo screen
               </Link>
             </div>
           </article>
         ))}
       </div>
-      {list.length === 0 && <p className="py-10 text-center text-sm text-slate-400">ไม่พบห้อง</p>}
+      {list.length === 0 && <p className="py-10 text-center text-sm text-slate-400">No rooms found</p>}
     </>
   );
 }

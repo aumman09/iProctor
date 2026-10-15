@@ -32,7 +32,7 @@ const FALLBACK_CHIMES: Record<AudioCue, Note[]> = {
 
 type Listener = () => void;
 
-class AudioEngine {
+export class AudioEngine {
   private ctx: AudioContext | null = null;
   private buffers = new Map<AudioCue, AudioBuffer | null>();
   private queue: AudioCue[] = [];
@@ -46,6 +46,14 @@ class AudioEngine {
   private roomKey: string | null = null;
   /** ชื่อ cue ที่กำลังเล่นอยู่ (ใช้แสดงสถานะบนจอ) */
   current: AudioCue | null = null;
+  /** เวลา (ctx) ที่เริ่มเล่นไฟล์ระเบียบการสอบมาตรฐาน — ใช้ไฮไลต์ข้อที่กำลังอ่าน (ไฟล์กำหนดเองไม่นับ) */
+  private rulesStartedAt: number | null = null;
+  private rulesIsCustom = false;
+
+  /** วินาทีที่เล่นไฟล์ระเบียบการสอบมาตรฐานไปแล้ว — null = ไม่ได้เล่นอยู่ */
+  rulesPosition(): number | null {
+    return this.ctx && this.rulesStartedAt !== null ? this.ctx.currentTime - this.rulesStartedAt : null;
+  }
 
   get unlocked() {
     return this.ctx !== null && this.ctx.state === "running";
@@ -137,10 +145,12 @@ class AudioEngine {
         buf = null; // ไฟล์ที่อัปโหลดเสียหาย → ใช้เสียงมาตรฐาน
       }
       if (buf) {
+        this.rulesIsCustom = true;
         this.buffers.set(cue, buf);
         return buf;
       }
     }
+    if (cue === "rules") this.rulesIsCustom = false;
     // ลองนามสกุลที่เบราว์เซอร์ถอดเสียงได้ตามลำดับ (เช่น chime_timeout.mp3 → .m4a → .mp4 → .wav)
     const base = AUDIO_CUES[cue].replace(/\.[a-z0-9]+$/i, "");
     for (const url of [...new Set([AUDIO_CUES[cue], `${base}.m4a`, `${base}.mp4`, `${base}.wav`])]) {
@@ -175,18 +185,24 @@ class AudioEngine {
   private async playCue(cue: AudioCue) {
     if (!this.ctx || this.muted) return;
     const buf = await this.load(cue);
-    if (buf) await this.playBuffer(buf);
-    else await this.playNotes(FALLBACK_CHIMES[cue]);
+    if (!buf) return this.playNotes(FALLBACK_CHIMES[cue]);
+    const track = cue === "rules" && !this.rulesIsCustom;
+    await this.playBuffer(buf, (at) => {
+      if (track) this.rulesStartedAt = at;
+    });
+    if (track) this.rulesStartedAt = null;
   }
 
-  private playBuffer(buf: AudioBuffer) {
+  private playBuffer(buf: AudioBuffer, onStart?: (ctxTime: number) => void) {
     const ctx = this.ctx!;
     return new Promise<void>((resolve) => {
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.connect(ctx.destination);
       src.onended = () => resolve();
-      src.start();
+      const at = ctx.currentTime;
+      src.start(at);
+      onStart?.(at);
     });
   }
 

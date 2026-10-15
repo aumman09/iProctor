@@ -75,7 +75,7 @@ export function StatusChip({ done, children }: { done: boolean; children?: React
       }`}
     >
       <span aria-hidden>{done ? "✓" : "○"}</span>
-      {children ?? (done ? "ส่งแล้ว" : "รอ")}
+      {children ?? (done ? "Submitted" : "Pending")}
     </span>
   );
 }
@@ -85,7 +85,7 @@ export function DailyBars({ data }: { data: Array<{ label: string; value: number
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
     <div>
-      <div className="flex h-40 items-end gap-2 border-b border-slate-200" role="img" aria-label="จำนวนการใช้งานรายวัน">
+      <div className="flex h-40 items-end gap-2 border-b border-slate-200" role="img" aria-label="Daily usage">
         {data.map((d) => (
           <div key={d.label} className="group relative flex h-full flex-1 items-end justify-center">
             <div
@@ -109,7 +109,7 @@ export function DailyBars({ data }: { data: Array<{ label: string; value: number
   );
 }
 
-const hm = (d: Date) => d.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
+const hm = (d: Date) => d.toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
 
 /** ไฟสถานะหน้าจอคุมสอบ (heartbeat) — ไฟเขียวกะพริบ = กำลังคุมสอบ, เทา = ปิดจอ/ขาดการเชื่อมต่อ; มีข้อความกำกับเสมอ */
 export function ScreenLight({
@@ -121,7 +121,7 @@ export function ScreenLight({
 }) {
   if (!screen) return null;
   const live = screen.state === "live";
-  const title = `เปิดหน้าจอ ${hm(screen.openedAt)}${screen.openedBy ? ` โดย ${screen.openedBy}` : ""} · สัญญาณล่าสุด ${hm(screen.lastSeenAt)}`;
+  const title = `Screen opened ${hm(screen.openedAt)}${screen.openedBy ? ` by ${screen.openedBy}` : ""} · last signal ${hm(screen.lastSeenAt)}`;
   return (
     <span
       title={title}
@@ -133,8 +133,8 @@ export function ScreenLight({
         {live && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />}
         <span className={`relative inline-flex h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-400"}`} />
       </span>
-      {live ? "กำลังคุมสอบ" : "ปิดหน้าจอแล้ว"}
-      {!compact && <span className="font-num font-normal opacity-80">· เปิด {hm(screen.openedAt)}</span>}
+      {live ? "Proctoring now" : "Screen closed"}
+      {!compact && <span className="font-num font-normal opacity-80">· opened {hm(screen.openedAt)}</span>}
     </span>
   );
 }

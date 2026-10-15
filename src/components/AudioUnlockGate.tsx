@@ -13,9 +13,9 @@ export function AudioUnlockGate({ roomCode, onUnlock }: { roomCode: string; onUn
         <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-slate-950 text-white flex items-center justify-center shadow-lg">
           <Volume2 className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900">พร้อมเริ่มระบบคุมสอบห้อง {roomCode}</h2>
+        <h2 className="text-2xl font-bold text-slate-900">Ready to start · Room {roomCode}</h2>
         <p className="text-slate-500 text-sm mt-2 leading-relaxed">
-          กดปุ่มด้านล่างเพื่อเปิดระบบเสียงประกาศอัตโนมัติ
+          Click the button below to enable automatic announcements.
           <br />
           (Click once to enable automatic announcements)
         </p>
@@ -23,7 +23,7 @@ export function AudioUnlockGate({ roomCode, onUnlock }: { roomCode: string; onUn
           onClick={onUnlock}
           className="mt-8 w-full py-3.5 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-2xl transition shadow-md"
         >
-          เริ่มระบบ / Start
+          Start
         </button>
       </div>
     </div>

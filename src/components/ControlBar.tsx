@@ -6,12 +6,12 @@ import { formatClock } from "@/lib/time";
 import type { Course, ExamEvent, RoomSchedule } from "@/lib/types";
 
 const EVENT_LABEL: Record<ExamEvent["type"], string> = {
-  ROOM_OPEN: "เปิดห้อง",
-  EXAM_START: "เริ่มสอบ",
-  DEPARTURE_ALLOWED: "ครบ 45 นาที",
-  COURSE_WARNING: "เตือน 10 นาที",
-  COURSE_END: "หมดเวลา",
-  SESSION_END: "จบรอบสอบ",
+  ROOM_OPEN: "Room open",
+  EXAM_START: "Exam start",
+  DEPARTURE_ALLOWED: "Leave allowed",
+  COURSE_WARNING: "Time warning",
+  COURSE_END: "Time up",
+  SESSION_END: "Session end",
 };
 
 const pill = "px-3.5 py-1.5 rounded-full border shadow-sm transition font-medium inline-flex items-center gap-1.5";
@@ -60,34 +60,34 @@ export function ControlBar(p: Props) {
         <div className="flex flex-wrap items-center gap-2">
           {p.onShowSeating && (
             <button onClick={p.onShowSeating} className={`${btn} text-slate-600`}>
-              <LayoutGrid className="w-3.5 h-3.5" /> ผังที่นั่ง
+              <LayoutGrid className="w-3.5 h-3.5" /> Seating
             </button>
           )}
           <button onClick={p.onEditNote} className={`${btn} ${p.noteVisible ? "text-amber-700 border-amber-300" : "text-slate-600"}`}>
-            <Megaphone className="w-3.5 h-3.5" /> {p.noteVisible ? "แก้ประกาศ" : "ประกาศ / โน้ต"}
+            <Megaphone className="w-3.5 h-3.5" /> {p.noteVisible ? "Edit announcement" : "Announcement"}
           </button>
           <CustomAudio {...p.customAudio} />
           <button onClick={p.onShowSlides} className={`${btn} text-slate-600`}>
-            <Presentation className="w-3.5 h-3.5" /> ระเบียบการสอบ
+            <Presentation className="w-3.5 h-3.5" /> Exam rules
           </button>
           <button
             onClick={() => setTesting((t) => !t)}
             className={`${btn} ${testing ? "text-indigo-700 border-indigo-300 bg-indigo-50" : "text-slate-600"}`}
           >
-            <FlaskConical className="w-3.5 h-3.5" /> ทดสอบสถานการณ์
+            <FlaskConical className="w-3.5 h-3.5" /> Test scenarios
           </button>
           <button onClick={p.onTestSound} className={`${btn} text-slate-600`}>
-            <Volume2 className="w-3.5 h-3.5" /> ทดสอบเสียง
+            <Volume2 className="w-3.5 h-3.5" /> Test sound
           </button>
           <button onClick={p.onToggleMute} className={`${btn} ${p.muted ? "text-rose-600" : "text-slate-600"}`}>
             {p.muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-            {p.muted ? "ปิดเสียงอยู่" : "เสียงเปิด"}
+            {p.muted ? "Muted" : "Sound on"}
           </button>
           <button
             onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
             className="px-4 py-1.5 rounded-full bg-slate-950 hover:bg-slate-800 text-white shadow-sm transition font-medium inline-flex items-center gap-1.5"
           >
-            <Maximize className="w-3.5 h-3.5" /> ฉายเต็มจอ
+            <Maximize className="w-3.5 h-3.5" /> Full screen
           </button>
         </div>
       </div>
@@ -100,21 +100,21 @@ function TestPanel({ courses, onTrigger, onClose }: Props["test"] & { onClose: (
   const tag = (c: Course) => (c.row_label ? ` (${c.row_label})` : courses.length > 1 ? ` ${c.course_code}` : "");
   return (
     <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40">
-      <span className="font-semibold text-indigo-600 mr-1">ทดสอบสถานการณ์</span>
-      <button onClick={() => onTrigger("ROOM_OPEN")} className={`${btn} text-indigo-600`}>เปิดห้อง (T-15)</button>
-      <button onClick={() => onTrigger("EXAM_START")} className={`${btn} text-indigo-600`}>เริ่มสอบ + ระเบียบ</button>
-      <button onClick={() => onTrigger("DEPARTURE_ALLOWED")} className={`${btn} text-indigo-600`}>ครบ 45 นาที</button>
+      <span className="font-semibold text-indigo-600 mr-1">Test scenarios</span>
+      <button onClick={() => onTrigger("ROOM_OPEN")} className={`${btn} text-indigo-600`}>Room open (T-15)</button>
+      <button onClick={() => onTrigger("EXAM_START")} className={`${btn} text-indigo-600`}>Exam start + rules</button>
+      <button onClick={() => onTrigger("DEPARTURE_ALLOWED")} className={`${btn} text-indigo-600`}>Leave allowed</button>
       {courses.map((c) => (
         <button key={`w${c.course_id}`} onClick={() => onTrigger("COURSE_WARNING", c.course_id)} className={`${btn} text-indigo-600`}>
-          เตือนก่อนหมดเวลา{tag(c)}
+          Time warning{tag(c)}
         </button>
       ))}
       {courses.map((c) => (
         <button key={`e${c.course_id}`} onClick={() => onTrigger("COURSE_END", c.course_id)} className={`${btn} text-indigo-600`}>
-          หมดเวลา{tag(c)}
+          Time up{tag(c)}
         </button>
       ))}
-      <button onClick={onClose} className={`${btn} text-slate-500 ml-auto`}>ปิด</button>
+      <button onClick={onClose} className={`${btn} text-slate-500 ml-auto`}>Close</button>
     </div>
   );
 }
@@ -123,10 +123,10 @@ function SimControls({ schedule, timeline, speed, onJump, onSpeed }: NonNullable
   const rowOf = (courseId?: string) => schedule.courses.find((c) => c.course_id === courseId)?.row_label;
   return (
     <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40">
-      <span className="font-semibold text-indigo-600 mr-1">โหมดจำลอง</span>
+      <span className="font-semibold text-indigo-600 mr-1">Simulation</span>
       {timeline.map((ev) => (
         <button key={ev.id} onClick={() => onJump(ev.at - 5000)} className={`${btn} text-indigo-600`}>
-          → {ev.type === "COURSE_WARNING" && ev.minutesLeft ? `เตือน ${ev.minutesLeft} นาที` : EVENT_LABEL[ev.type]}
+          → {ev.type === "COURSE_WARNING" && ev.minutesLeft ? `${ev.minutesLeft} min warning` : EVENT_LABEL[ev.type]}
           {ev.courseId && ` (${rowOf(ev.courseId)})`}
           <span className="font-num text-slate-400">{formatClock(ev.at).slice(0, 5)}</span>
         </button>
@@ -156,14 +156,14 @@ function CustomAudio({ name, onPick, onPreview, onClear }: Props["customAudio"])
           e.target.value = "";
         }}
       />
-      <button onClick={() => input.current?.click()} className={`${btn} text-slate-600`} title="เลือกไฟล์เสียงคำชี้แจงเริ่มสอบ (.mp3 / .wav)">
-        <Music className="w-3.5 h-3.5" /> {name ? `เสียงคำชี้แจง: ${name}` : "เลือกเสียงคำชี้แจง"}
+      <button onClick={() => input.current?.click()} className={`${btn} text-slate-600`} title="Choose a custom exam-rules audio file (.mp3 / .wav)">
+        <Music className="w-3.5 h-3.5" /> {name ? `Rules audio: ${name}` : "Custom rules audio"}
       </button>
-      <button onClick={onPreview} className={`${btn} text-slate-600`} title="ฟังตัวอย่างเสียงคำชี้แจง">
+      <button onClick={onPreview} className={`${btn} text-slate-600`} title="Preview rules audio">
         <Play className="w-3.5 h-3.5" />
       </button>
       {name && (
-        <button onClick={onClear} className={`${btn} text-rose-600`} title="ลบไฟล์เสียงที่เลือก">
+        <button onClick={onClear} className={`${btn} text-rose-600`} title="Remove custom audio">
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       )}

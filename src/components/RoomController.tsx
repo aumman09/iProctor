@@ -8,6 +8,7 @@ import { useProctorNotes } from "@/hooks/useProctorNotes";
 import { useRoomLayout } from "@/hooks/useRoomLayout";
 import { useRoomSchedule } from "@/hooks/useRoomSchedule";
 import { timingOf } from "@/lib/schedule-engine";
+import { seatRangeLabel } from "@/lib/seat-range";
 import { guessSession, parseSimStart, shortTime, todayISO } from "@/lib/time";
 import type { ExamEvent, SessionName } from "@/lib/types";
 import { AlertCenter, type Alert } from "./AlertCenter";
@@ -60,6 +61,13 @@ export function RoomController(props: RoomControllerProps) {
   // FR-05.4 ประกาศของกรรมการ — เก็บในเครื่องฉาย แยกตามห้อง/วัน/รอบ (โหมดจำลองแยก key ไม่ปนของจริง)
   const notes = useProctorNotes(`${props.roomId}:${target.date}:${target.session}${sim ? ":sim" : ""}`);
   const [editingNote, setEditingNote] = useState(false);
+  // โหมดฉายเต็มจอ: ทุกอย่างต้องพอดีจอเดียว (รวมโปรเจกเตอร์ 4:3) และซ่อนแถบควบคุม (เลื่อนขึ้นเมื่อชี้ขอบล่าง)
+  const [fullscreen, setFullscreen] = useState(false);
+  useEffect(() => {
+    const sync = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
   // สถานะ "สอบเสร็จ" ที่กดในหน้านี้ (ทับค่าจาก schedule) + รายวิชาที่กำลังยืนยัน
   const [completion, setCompletion] = useState<Record<string, string | null>>({});
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -95,7 +103,7 @@ export function RoomController(props: RoomControllerProps) {
     (ev: ExamEvent) => {
       if (!schedule) return;
       const course = schedule.courses.find((c) => c.course_id === ev.courseId);
-      const courseLabel = course ? `วิชา ${course.course_code} ${course.course_name} (แถว ${course.row_label})` : "";
+      const courseLabel = course ? `${course.course_code} ${course.course_name}${course.row_label ? ` (Seat ${course.row_label})` : ""}` : "";
 
       switch (ev.type) {
         case "ROOM_OPEN":
@@ -104,8 +112,8 @@ export function RoomController(props: RoomControllerProps) {
             id: ev.id,
             kind: "info",
             variant: "toast",
-            title: "เปิดห้องสอบแล้ว",
-            description: "กรุณาตรวจสอบรหัสนักศึกษาและนั่งตามแถว/สีป้ายที่กำหนด (Please take your assigned seat)",
+            title: "The exam room is now open",
+            description: "Please take your assigned seat according to your seat number and sign colour.",
           });
           break;
 
@@ -120,9 +128,9 @@ export function RoomController(props: RoomControllerProps) {
             id: ev.id,
             kind: "departure",
             variant: "modal",
-            title: "ครบกำหนด 45 นาทีแรกของการสอบ",
+            title: "45 minutes have elapsed",
             description:
-              "นักศึกษาที่ทำข้อสอบเสร็จเรียบร้อยแล้ว ได้รับอนุญาตให้ส่งกระดาษคำตอบและออกจากห้องสอบได้ (Students who have finished are permitted to submit and leave.)",
+              "Students who have finished may now submit their answer sheets and leave the examination room quietly.",
           });
           break;
 
@@ -132,8 +140,8 @@ export function RoomController(props: RoomControllerProps) {
             id: ev.id,
             kind: "warning",
             variant: "toast",
-            title: `เหลือเวลาอีก ${ev.minutesLeft ?? timingOf(schedule).warningsBeforeEndMin[0] ?? 10} นาที${course?.row_label ? ` (แถว ${course.row_label})` : ""}`,
-            description: `${courseLabel} จะหมดเวลาสอบเมื่อ ${course ? shortTime(course.end_time) : ""} น. กรุณาตรวจสอบชื่อและรหัสนักศึกษา`,
+            title: `${ev.minutesLeft ?? timingOf(schedule).warningsBeforeEndMin[0] ?? 10} minutes remaining${course?.row_label ? ` (Seat ${course.row_label})` : ""}`,
+            description: `${courseLabel} ends at ${course ? shortTime(course.end_time) : ""}. Please check your name and student ID on the answer sheet.`,
           });
           break;
 
@@ -175,7 +183,7 @@ export function RoomController(props: RoomControllerProps) {
   if (!schedule || now === null || !phase) {
     return (
       <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">
-        {error ? `โหลดตารางสอบไม่สำเร็จ: ${error}` : "กำลังโหลดตารางสอบ…"}
+        {error ? `Could not load the exam schedule: ${error}` : "Loading exam schedule…"}
       </div>
     );
   }
@@ -212,12 +220,12 @@ export function RoomController(props: RoomControllerProps) {
   const showSlides = slides === "manual" || (slides === "auto" && phase === "INSTRUCTION");
 
   return (
-    <div className="min-h-screen flex flex-col justify-between select-none">
+    <div className={`flex flex-col justify-between select-none ${fullscreen ? "h-[100dvh] overflow-hidden" : "min-h-screen"}`}>
       <Header roomCode={schedule.room_code} status={sim || props.demo ? "simulation" : source === "cache" ? "offline" : "active"} />
 
-      <OfficialClock now={now} schedule={schedule} phase={phase} />
+      <OfficialClock now={now} schedule={schedule} phase={phase} shrink={notes.note.visible && !!notes.note.text.trim()} />
 
-      <main className="max-w-5xl mx-auto w-full px-6 flex-1 flex flex-col gap-4 justify-center">
+      <main className="max-w-5xl mx-auto w-full px-6 flex-1 min-h-0 flex flex-col gap-[1.5vh] justify-center pb-[1.5vh]">
         <NoteBoard note={notes.note} />
         {courses.map((c) => (
           <CourseCard
@@ -226,10 +234,12 @@ export function RoomController(props: RoomControllerProps) {
             now={now}
             completedAt={completedAt(c.course.course_id)}
             onToggleComplete={() => setConfirming(c.course.course_id)}
+            seatLabel={seatRangeLabel(layout, c.course.row_label)}
           />
         ))}
       </main>
 
+      <ControlDock hidden={fullscreen}>
       <ControlBar
         version={VERSION}
         synced={synced}
@@ -258,6 +268,7 @@ export function RoomController(props: RoomControllerProps) {
           }
         }
       />
+      </ControlDock>
 
       {showSeating && layout && (
         <SeatingOverlay
@@ -270,7 +281,7 @@ export function RoomController(props: RoomControllerProps) {
           onClose={() => setSeatingOverride(false)}
         />
       )}
-      {showSlides && <InstructionSlides schedule={schedule} onClose={() => setSlides(null)} />}
+      {showSlides && <InstructionSlides schedule={schedule} engine={audio.engine} onClose={() => setSlides(null)} />}
       <AlertCenter alerts={alerts} onDismiss={dismissAlert} />
       {confirmingCourse && (
         <CompletionDialog
@@ -282,6 +293,18 @@ export function RoomController(props: RoomControllerProps) {
       )}
       {editingNote && <NoteEditor note={notes.note} now={now} onSave={notes.save} onClose={() => setEditingNote(false)} />}
       {!audio.unlocked && <AudioUnlockGate roomCode={schedule.room_code} onUnlock={() => void audio.engine.unlock()} />}
+    </div>
+  );
+}
+
+/** โหมดเต็มจอ: แถบควบคุมซ่อนอยู่ใต้ขอบจอ — เลื่อนเมาส์ไปขอบล่างเพื่อแสดง (นักศึกษาเห็นแค่นาฬิกา/เวลาสอบ) */
+function ControlDock({ hidden, children }: { hidden: boolean; children: React.ReactNode }) {
+  if (!hidden) return <>{children}</>;
+  return (
+    <div className="group fixed inset-x-0 bottom-0 z-40 pt-8">
+      <div className="translate-y-full border-t border-slate-200 bg-white/95 opacity-0 backdrop-blur transition duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+        {children}
+      </div>
     </div>
   );
 }

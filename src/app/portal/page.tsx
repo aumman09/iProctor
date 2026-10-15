@@ -13,16 +13,16 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 // โทนกลาง (slate) ทั้งหน้า ใช้เขียว (emerald) เฉพาะสิ่งที่ "เปิดอยู่ตอนนี้" เท่านั้น
 const STATUS: Record<DutyStatus, { label: string; cls: string; dot: string }> = {
-  UPCOMING: { label: "ถัดไป", cls: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
-  LIVE: { label: "กำลังสอบ", cls: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500 animate-pulse" },
-  COMPLETED: { label: "เสร็จสิ้น", cls: "bg-slate-100 text-slate-400", dot: "bg-slate-300" },
+  UPCOMING: { label: "Upcoming", cls: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
+  LIVE: { label: "In session", cls: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500 animate-pulse" },
+  COMPLETED: { label: "Completed", cls: "bg-slate-100 text-slate-400", dot: "bg-slate-300" },
 };
 
-const SESSION_LABEL = { morning: "รอบเช้า", afternoon: "รอบบ่าย" } as const;
+const SESSION_LABEL = { morning: "Morning session", afternoon: "Afternoon session" } as const;
 
 const dateParts = (d: string) => {
   const date = new Date(`${d}T00:00:00Z`);
-  const fmt = (o: Intl.DateTimeFormatOptions) => date.toLocaleDateString("th-TH", { timeZone: "UTC", ...o });
+  const fmt = (o: Intl.DateTimeFormatOptions) => date.toLocaleDateString("en-GB", { timeZone: "UTC", ...o });
   return { day: fmt({ day: "numeric" }), month: fmt({ month: "short" }), weekday: fmt({ weekday: "short" }) };
 };
 
@@ -53,7 +53,7 @@ export default async function PortalPage(props: PageProps<"/portal">) {
               iProctor <span className="text-rose-600">MFU</span>
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              ตารางคุมสอบ · {user.name} ({user.role === "admin" ? "Admin" : "Proctor"})
+              Proctor schedule · {user.name} ({user.role === "admin" ? "Admin" : "Proctor"})
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -69,7 +69,7 @@ export default async function PortalPage(props: PageProps<"/portal">) {
             <form action={logout}>
               <button className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900">
                 <LogOut className="w-4 h-4" />
-                ออกจากระบบ
+                Sign out
               </button>
             </form>
           </div>
@@ -77,7 +77,7 @@ export default async function PortalPage(props: PageProps<"/portal">) {
 
         <div className="mb-3 flex items-center justify-between gap-2">
           <p className="text-sm text-slate-500">
-            เวรคุมสอบ <span className="font-semibold text-slate-900">{duties.length}</span> รายการ
+            <span className="font-semibold text-slate-900">{duties.length}</span> proctoring duties
           </p>
           <AddToCalendarButton count={upcoming.length + live.length} />
         </div>
@@ -97,23 +97,23 @@ export default async function PortalPage(props: PageProps<"/portal">) {
             <input
               name="room"
               defaultValue={room}
-              placeholder="ค้นหาห้อง เช่น C3 107 (กรณีคุมสอบแทน)"
+              placeholder="Search room, e.g. C3 107 (when covering for someone)"
               className="w-full rounded-xl pl-9 pr-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:bg-slate-50"
             />
           </div>
-          <button className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200">ค้นหา</button>
+          <button className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200">Search</button>
         </form>
 
-        {duties.length === 0 && <p className="text-center text-slate-400 py-12">ไม่พบเวรคุมสอบ</p>}
+        {duties.length === 0 && <p className="text-center text-slate-400 py-12">No proctoring duties found</p>}
 
         {live.length > 0 && (
-          <Section title="ตอนนี้">
+          <Section title="Now">
             <ul className="space-y-3">{live.map(renderDuty)}</ul>
           </Section>
         )}
 
         {upcoming.length > 0 && (
-          <Section title="เวรถัดไป">
+          <Section title="Upcoming">
             <ul className="space-y-3">{upcoming.map(renderDuty)}</ul>
           </Section>
         )}
@@ -121,7 +121,7 @@ export default async function PortalPage(props: PageProps<"/portal">) {
         {past.length > 0 && (
           <details className="group">
             <summary className="cursor-pointer select-none list-none inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
-              เวรที่ผ่านไปแล้ว ({past.length})
+              Past duties ({past.length})
               <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
             </summary>
             <ul className="space-y-3 mt-3 opacity-70">{past.map(renderDuty)}</ul>
@@ -172,7 +172,7 @@ function renderDuty(d: ProctorDuty) {
           </span>
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-slate-400" />
-            อาคาร {d.building} ห้อง {d.roomNumber}
+            Building {d.building} · Room {d.roomNumber}
           </span>
         </div>
 
@@ -184,7 +184,7 @@ function renderDuty(d: ProctorDuty) {
             >
               <span className={`h-2 w-2 rounded-full ${SEAT_THEME[c.seatColorTheme].dot}`} />
               {c.courseName}
-              {c.rowLabel && <span className="text-slate-400">· แถว {c.rowLabel}</span>}
+              {c.rowLabel && <span className="text-slate-400">· Seat {c.rowLabel}</span>}
             </li>
           ))}
         </ul>
@@ -196,7 +196,7 @@ function renderDuty(d: ProctorDuty) {
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               <MonitorPlay className="w-4 h-4" />
-              เปิดหน้าจอคุมสอบ
+              Launch exam screen
             </Link>
           )}
           <Link
@@ -204,7 +204,7 @@ function renderDuty(d: ProctorDuty) {
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >
             <LayoutGrid className="w-4 h-4 text-slate-400" />
-            ดูผังที่นั่ง
+            Seating plan
           </Link>
         </div>
       </div>

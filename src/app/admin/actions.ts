@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/server/auth";
 import { setCourseCompletion } from "@/lib/server/data-source";
 import { db } from "@/lib/server/db";
 import { slotCourses } from "@/lib/server/db/schema";
-import { normalizeTiming, saveAlertTiming } from "@/lib/server/settings";
+import { normalizeCues, normalizeTiming, saveAlertTiming, saveRulesCues } from "@/lib/server/settings";
 import { logUsage } from "@/lib/server/usage";
 
 // Server Actions ของ Admin Panel — ตรวจสิทธิ์ทุกครั้ง (เรียกตรงด้วย POST ได้)
@@ -23,16 +23,16 @@ export async function saveCourseNote(_prev: ActionState, form: FormData): Promis
   const user = await requireAdmin();
   const id = Number(form.get("slotCourseId"));
   const note = String(form.get("note") ?? "").trim().slice(0, 300);
-  if (!Number.isInteger(id)) return { ok: false, message: "ไม่พบรายวิชา" };
+  if (!Number.isInteger(id)) return { ok: false, message: "Course not found" };
   const [row] = await db
     .update(slotCourses)
     .set({ adminNote: note || null, updatedAt: new Date() })
     .where(eq(slotCourses.id, id))
     .returning({ courseCode: slotCourses.courseCode });
-  if (!row) return { ok: false, message: "ไม่พบรายวิชา" };
+  if (!row) return { ok: false, message: "Course not found" };
   await logUsage("NOTE_UPDATED", { staffId: user.staff_id, meta: { slotCourseId: id, courseCode: row.courseCode } });
   revalidatePath("/admin", "layout");
-  return { ok: true, message: note ? "บันทึกแล้ว" : "ลบข้อกำหนดแล้ว" };
+  return { ok: true, message: note ? "Saved" : "Note removed" };
 }
 
 /** Admin ตั้ง/ยกเลิกสถานะ "สอบเสร็จ" แทนผู้คุมสอบ */
@@ -60,9 +60,20 @@ export async function saveTimingSettings(_prev: ActionState, form: FormData): Pr
     departureAfterMin: num("departureAfterMin"),
     warningsBeforeEndMin: form.getAll("warning").filter((v) => v !== "").map(Number),
   });
-  if (!timing) return { ok: false, message: "ค่าไม่ถูกต้อง — ใส่เป็นจำนวนเต็มนาที (เปิดห้อง 0–120, ออกห้อง 0–240, เตือน 1–120)" };
+  if (!timing) return { ok: false, message: "Invalid values — use whole minutes (room open 0–120, leave 0–240, warnings 1–120)" };
   await saveAlertTiming(timing, user.staff_id);
   await logUsage("SETTINGS_UPDATED", { staffId: user.staff_id, meta: { alertTiming: timing } });
   revalidatePath("/admin", "layout");
-  return { ok: true, message: "บันทึกเวลาแจ้งเตือนแล้ว — หน้าจอคุมสอบจะใช้ค่าใหม่เมื่อโหลดหน้าใหม่" };
+  return { ok: true, message: "Alert timing saved — exam screens use it after a reload" };
+}
+
+/** เวลาเริ่มแต่ละช่วงของเสียงระเบียบการสอบ (ไฮไลต์บนจอให้ตรงเสียง) */
+export async function saveRulesSync(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireAdmin();
+  const cues = normalizeCues(form.getAll("cue").map((v) => Number(v)));
+  if (!cues) return { ok: false, message: "Each start time must be later than the previous one (0–600 seconds)." };
+  await saveRulesCues(cues, user.staff_id);
+  await logUsage("SETTINGS_UPDATED", { staffId: user.staff_id, meta: { rulesCues: cues } });
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: "Saved — exam screens use the new timing after a reload." };
 }

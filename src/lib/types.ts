@@ -56,6 +56,8 @@ export interface RoomSchedule {
   courses: Course[];
   /** ไม่มี (cache เก่า) = ใช้ค่าเริ่มต้นใน config.ts */
   timing?: AlertTiming;
+  /** วินาทีเริ่มแต่ละช่วงของเสียงระเบียบการสอบ (ไฮไลต์ข้อที่กำลังอ่าน) */
+  rules_cues?: number[];
 }
 
 export interface MyAssignment {

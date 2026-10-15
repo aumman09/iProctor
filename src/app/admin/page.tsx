@@ -6,16 +6,16 @@ import { SEAT_THEME } from "@/components/seat-theme";
 import { bangkokToday, getCompletionStats, getRecentActivity, getUsageSummary } from "@/lib/server/admin";
 import { getExamPeriods } from "@/lib/server/data-source";
 
-const SESSION = { morning: "รอบเช้า", afternoon: "รอบบ่าย" } as const;
+const SESSION = { morning: "Morning", afternoon: "Afternoon" } as const;
 const ACTIVITY: Record<string, string> = {
-  COURSE_COMPLETED: "ยืนยันสอบเสร็จ",
-  COURSE_REOPENED: "ยกเลิกสถานะสอบเสร็จ",
-  NOTE_UPDATED: "แก้ข้อกำหนดรายวิชา",
-  SETTINGS_UPDATED: "แก้เวลาแจ้งเตือน",
-  LOGIN: "เข้าสู่ระบบ",
+  COURSE_COMPLETED: "marked exam completed",
+  COURSE_REOPENED: "undid exam completion",
+  NOTE_UPDATED: "updated course note",
+  SETTINGS_UPDATED: "updated settings",
+  LOGIN: "signed in",
 };
-const thaiDay = (d: string, o: Intl.DateTimeFormatOptions) => new Date(`${d}T00:00:00Z`).toLocaleDateString("th-TH", { timeZone: "UTC", ...o });
-const time = (d: Date) => d.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
+const thaiDay = (d: string, o: Intl.DateTimeFormatOptions) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { timeZone: "UTC", ...o });
+const time = (d: Date) => d.toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
 
 export default async function AdminDashboard(props: PageProps<"/admin">) {
   const sp = await props.searchParams;
@@ -29,8 +29,8 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
     <>
       <AutoRefresh />
       <PageHeader
-        title="ภาพรวม"
-        sub={`${thaiDay(today, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · ${period ?? "ยังไม่มีช่วงสอบ"}`}
+        title="Dashboard"
+        sub={`${thaiDay(today, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · ${period ?? "No exam period yet"}`}
         actions={
           <form method="get" className="flex gap-2">
             <select name="period" defaultValue={period} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
@@ -38,7 +38,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
                 <option key={p}>{p}</option>
               ))}
             </select>
-            <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white">ดู</button>
+            <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white">View</button>
           </form>
         }
       />
@@ -46,7 +46,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
           icon={CheckCheck}
-          label="รายวิชาส่งข้อสอบแล้ว"
+          label="Courses submitted"
           value={
             <>
               {stats.coursesDone}
@@ -54,46 +54,46 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
             </>
           }
           progress={pct}
-          sub={`${Math.round(pct * 100)}% ของช่วงสอบนี้`}
+          sub={`${Math.round(pct * 100)}% of this exam period`}
         />
         <StatTile
           icon={DoorOpen}
-          label="รอบสอบที่ส่งครบทุกวิชา"
+          label="Sessions fully submitted"
           value={
             <>
               {stats.slotsDone}
               <span className="text-lg font-medium text-slate-400"> / {stats.slots}</span>
             </>
           }
-          sub={`ใช้ห้องสอบ ${stats.rooms} ห้อง`}
+          sub={`${stats.rooms} exam rooms in use`}
         />
         <StatTile
           icon={MonitorPlay}
-          label="ห้องที่กำลังคุมสอบตอนนี้"
+          label="Rooms proctoring now"
           value={
             <span className="inline-flex items-center gap-2">
               {stats.liveNow > 0 && <span className="h-3 w-3 rounded-full bg-emerald-500" aria-hidden />}
               {stats.liveNow}
             </span>
           }
-          sub={`เปิดหน้าจอคุมสอบวันนี้ ${usage.today.roomOpens} ครั้ง · ดูผัง ${usage.today.seatingViews} ครั้ง`}
+          sub={`Exam screens opened today: ${usage.today.roomOpens} · seating views: ${usage.today.seatingViews}`}
         />
-        <StatTile icon={Users} label="ผู้ใช้งาน 7 วันล่าสุด" value={usage.activeUsers7d} sub={`เข้าสู่ระบบวันนี้ ${usage.today.logins} ครั้ง`} />
+        <StatTile icon={Users} label="Active users (7 days)" value={usage.activeUsers7d} sub={`Sign-ins today: ${usage.today.logins}`} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         <Card
           className="lg:col-span-3"
-          title="รอบสอบวันนี้"
-          sub="สถานะจากการกด “Mark as completed” ในหน้าจอคุมสอบ"
+          title="Today's exam sessions"
+          sub="Status from “Mark as completed” on the exam screen"
           action={
             <Link href={`/admin/exams?date=${today}`} className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              ดูทั้งหมด →
+              View all →
             </Link>
           }
         >
           {stats.todaySlots.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">วันนี้ไม่มีรอบสอบในช่วงสอบนี้</p>
+            <p className="py-8 text-center text-sm text-slate-400">No exam sessions today in this period</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {stats.todaySlots.map((s) => {
@@ -114,7 +114,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
                         <span key={c.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600">
                           <span className={`h-2 w-2 rounded-full ${SEAT_THEME[c.seatColor].dot}`} />
                           {c.courseCode}
-                          <StatusChip done={!!c.completedAt}>{c.completedAt ? time(c.completedAt) : "รอ"}</StatusChip>
+                          <StatusChip done={!!c.completedAt}>{c.completedAt ? time(c.completedAt) : "Pending"}</StatusChip>
                         </span>
                       ))}
                     </div>
@@ -129,7 +129,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
         </Card>
 
         <div className="flex flex-col gap-6 lg:col-span-2">
-          <Card title="การใช้งานรายวัน" sub="เข้าสู่ระบบ · ตารางคุมสอบ · หน้าจอคุมสอบ · ผังที่นั่ง (7 วัน)">
+          <Card title="Daily usage" sub="Sign-ins · portal · exam screens · seating plans (7 days)">
             <DailyBars
               data={usage.daily.map((d) => ({
                 label: thaiDay(d.date, { weekday: "short" }),
@@ -139,9 +139,9 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
             />
           </Card>
 
-          <Card title="กิจกรรมล่าสุด">
+          <Card title="Recent activity">
             {activity.length === 0 ? (
-              <p className="py-4 text-center text-sm text-slate-400">ยังไม่มีกิจกรรม</p>
+              <p className="py-4 text-center text-sm text-slate-400">No activity yet</p>
             ) : (
               <ul className="space-y-3">
                 {activity.map((a) => (
@@ -149,7 +149,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
                     <Activity className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-300" />
                     <div className="min-w-0 flex-1">
                       <p className="text-slate-700">
-                        <span className="font-medium text-slate-900">{a.name ?? "ไม่ระบุ"}</span> · {ACTIVITY[a.type] ?? a.type}
+                        <span className="font-medium text-slate-900">{a.name ?? "Unknown"}</span> · {ACTIVITY[a.type] ?? a.type}
                         {typeof a.meta?.courseCode === "string" && <span className="text-slate-500"> {a.meta.courseCode}</span>}
                         {a.roomId && <span className="text-slate-500"> ({a.roomId})</span>}
                       </p>
@@ -164,7 +164,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
       </div>
 
       <p className="mt-6 flex items-center gap-1.5 text-xs text-slate-400">
-        <CalendarCheck className="h-3.5 w-3.5" /> นับ “ส่งข้อสอบแล้ว” เมื่อผู้คุมสอบกดยืนยันในหน้าจอคุมสอบ หรือ Admin ทำเครื่องหมายในหน้า “รอบสอบ & รายวิชา”
+        <CalendarCheck className="h-3.5 w-3.5" /> A course counts as “submitted” when the proctor confirms it on the exam screen, or an admin marks it on the “Exams & courses” page.
       </p>
     </>
   );

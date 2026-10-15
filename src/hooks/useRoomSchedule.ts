@@ -25,7 +25,7 @@ export function useRoomSchedule(roomId: string, date: string | null, session: Se
       try {
         const url = `/api/v1/exam-rooms/${encodeURIComponent(roomId)}/schedule?date=${date}&session=${session}${demo ? "&demo=1" : ""}`;
         const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
-        if (!res.ok) throw new Error(res.status === 404 ? "ไม่พบห้องสอบนี้" : `HTTP ${res.status}`);
+        if (!res.ok) throw new Error(res.status === 404 ? "Exam room not found" : `HTTP ${res.status}`);
         const schedule = (await res.json()) as RoomSchedule;
         writeCache(key, schedule);
         setState({ schedule, source: "network", error: null });

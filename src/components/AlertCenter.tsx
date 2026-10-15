@@ -45,7 +45,7 @@ export function AlertCenter({ alerts, onDismiss }: { alerts: Alert[]; onDismiss:
               onClick={() => onDismiss(modal.id)}
               className="w-full py-3 bg-slate-950 hover:bg-slate-800 text-white font-medium rounded-xl text-sm transition shadow-sm"
             >
-              รับทราบ / ปิดหน้าต่าง (Dismiss)
+              Dismiss
             </button>
           </div>
         </div>

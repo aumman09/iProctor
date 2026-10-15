@@ -9,10 +9,10 @@ import { getExamOverview } from "@/lib/server/admin";
 import { getExamPeriods } from "@/lib/server/data-source";
 import type { SessionName } from "@/lib/types";
 
-const SESSION = { morning: "รอบเช้า", afternoon: "รอบบ่าย" } as const;
+const SESSION = { morning: "Morning", afternoon: "Afternoon" } as const;
 const thaiDate = (d: string) =>
-  new Date(`${d}T00:00:00Z`).toLocaleDateString("th-TH", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short", year: "numeric" });
-const time = (d: Date) => d.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
+  new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short", year: "numeric" });
+const time = (d: Date) => d.toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
 
 export default async function AdminExams(props: PageProps<"/admin/exams">) {
   const sp = await props.searchParams;
@@ -32,8 +32,8 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
     <>
       <AutoRefresh />
       <PageHeader
-        title="รอบสอบ & รายวิชา"
-        sub="สถานะหน้าจอคุมสอบ (ไฟเขียว = กำลังคุมสอบ) การส่งข้อสอบรายวิชา และข้อกำหนดเพิ่มเติม — อัปเดตอัตโนมัติทุก 30 วินาที"
+        title="Exams & courses"
+        sub="Exam screen status (green = proctoring now), course submission and extra course notes — refreshes every 30 seconds"
       />
 
       <form method="get" className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3">
@@ -44,32 +44,32 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
         </select>
         <input type="date" name="date" defaultValue={date} className={field} />
         <select name="session" defaultValue={session ?? ""} className={field}>
-          <option value="">ทุกรอบ</option>
-          <option value="morning">รอบเช้า</option>
-          <option value="afternoon">รอบบ่าย</option>
+          <option value="">All sessions</option>
+          <option value="morning">Morning</option>
+          <option value="afternoon">Afternoon</option>
         </select>
         <select name="status" defaultValue={status ?? ""} className={field}>
-          <option value="">ทุกสถานะ</option>
-          <option value="pending">ยังไม่ส่ง</option>
-          <option value="done">ส่งแล้ว</option>
+          <option value="">All statuses</option>
+          <option value="pending">Not submitted</option>
+          <option value="done">Submitted</option>
         </select>
         <div className="relative min-w-48 flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input name="q" defaultValue={q} placeholder="ห้อง รหัสวิชา หรือชื่อวิชา" className={`${field} w-full pl-9`} />
+          <input name="q" defaultValue={q} placeholder="Room, course code or course name" className={`${field} w-full pl-9`} />
         </div>
-        <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white">กรอง</button>
+        <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white">Filter</button>
         <Link href="/admin/exams" className="px-2 text-sm text-slate-500 hover:text-slate-900">
-          ล้าง
+          Clear
         </Link>
       </form>
 
       <p className="mb-3 text-sm text-slate-500">
-        {slots.length} รอบสอบ · {courseCount} รายวิชา
+        {slots.length} sessions · {courseCount} courses
       </p>
 
       {slots.length === 0 ? (
         <Card>
-          <p className="py-10 text-center text-sm text-slate-400">ไม่พบรอบสอบตามเงื่อนไข</p>
+          <p className="py-10 text-center text-sm text-slate-400">No exam sessions match the filters</p>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -87,25 +87,25 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs text-slate-500">
                       <UserRound className="h-3.5 w-3.5" />
-                      {s.proctors.map((p) => `${p.name}${p.role === "HEAD" ? " (หลัก)" : ""}`).join(", ") || "ยังไม่มีผู้คุมสอบ"}
+                      {s.proctors.map((p) => `${p.name}${p.role === "HEAD" ? " (head)" : ""}`).join(", ") || "No proctor assigned"}
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <ScreenLight screen={s.screen} />
                     <StatusChip done={done === s.courses.length}>
-                      ส่งแล้ว {done}/{s.courses.length}
+                      Submitted {done}/{s.courses.length}
                     </StatusChip>
                     <Link
                       href={`/seating/${s.roomId}`}
                       className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                     >
-                      <LayoutGrid className="h-3.5 w-3.5" /> ผัง
+                      <LayoutGrid className="h-3.5 w-3.5" /> Seating
                     </Link>
                     <Link
                       href={`/room/${s.roomId}?date=${s.date}&session=${s.session}`}
                       className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                     >
-                      <MonitorPlay className="h-3.5 w-3.5" /> จอคุมสอบ
+                      <MonitorPlay className="h-3.5 w-3.5" /> Exam screen
                     </Link>
                   </div>
                 </header>
@@ -137,16 +137,16 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
                         {c.completedAt ? (
                           <>
                             <StatusChip done>
-                              ส่งแล้ว {time(c.completedAt)}
+                              Submitted {time(c.completedAt)}
                               {c.completedByName && ` · ${c.completedByName}`}
                             </StatusChip>
-                            <button className="text-xs text-slate-400 underline hover:text-slate-700">ยกเลิก</button>
+                            <button className="text-xs text-slate-400 underline hover:text-slate-700">Undo</button>
                           </>
                         ) : (
                           <>
-                            <StatusChip done={false}>ยังไม่ส่ง</StatusChip>
+                            <StatusChip done={false}>Not submitted</StatusChip>
                             <button className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                              ทำเครื่องหมายส่งแล้ว
+                              Mark as submitted
                             </button>
                           </>
                         )}

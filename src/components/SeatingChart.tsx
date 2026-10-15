@@ -148,9 +148,9 @@ export function SeatingChart({ layout: input, large = false }: { layout: RoomLay
             }`}
           >
             {front === "LEFT" && <ArrowLeft className="w-4 h-4" />}
-            <Projector className="w-4 h-4" /> หน้าห้อง (ไวท์บอร์ด)
-            {front === "LEFT" && " อยู่ด้านซ้าย"}
-            {front === "RIGHT" && " อยู่ด้านขวา"}
+            <Projector className="w-4 h-4" /> Front of room (whiteboard)
+            {front === "LEFT" && " on the left"}
+            {front === "RIGHT" && " on the right"}
             {front === "RIGHT" && <ArrowRight className="w-4 h-4" />}
           </div>
 
@@ -159,7 +159,7 @@ export function SeatingChart({ layout: input, large = false }: { layout: RoomLay
             style={{ aspectRatio: `${w} / ${h}`, containerType: "inline-size" }}
           >
             {layout.whiteboard && (
-              <div className="absolute rounded-sm bg-slate-400" style={pos(layout.whiteboard)} title="ไวท์บอร์ด" />
+              <div className="absolute rounded-sm bg-slate-400" style={pos(layout.whiteboard)} title="Whiteboard" />
             )}
 
             {layout.desks?.map((d, i) => (
@@ -176,7 +176,7 @@ export function SeatingChart({ layout: input, large = false }: { layout: RoomLay
                     !c.seat || off ? "border-dashed border-slate-300" : CHAIR_FILL[g?.colorTheme ?? "white"]
                   }`}
                   style={pos(c)}
-                  title={c.seat ? (off ? `${c.seat} · งดใช้` : c.seat) : "เก้าอี้ว่าง"}
+                  title={c.seat ? (off ? `${c.seat} · not in use` : c.seat) : "Empty chair"}
                 />
               );
             })}
@@ -212,8 +212,8 @@ export function SeatingChart({ layout: input, large = false }: { layout: RoomLay
               <span
                 key={`door${i}`}
                 style={DOOR_POS[d.wall](d.at)}
-                title="ประตู"
-                aria-label="ประตู"
+                title="Door"
+                aria-label="Door"
                 className="absolute inline-flex items-center justify-center rounded-md border border-slate-300 bg-white p-1 text-slate-500 shadow-sm"
               >
                 <DoorOpen className={large ? "w-5 h-5" : "w-4 h-4"} />
@@ -239,12 +239,12 @@ export function SeatingChart({ layout: input, large = false }: { layout: RoomLay
                   {Math.min(...nums)}–{g.key}
                   {Math.max(...nums)}
                 </span>
-                <span className="text-slate-400"> · {nums.length} ที่นั่ง</span>
+                <span className="text-slate-400"> · {nums.length} seats</span>
                 {g.courseName && <> · {g.courseName}</>}
                 {g.studentIdRange && (
                   <>
                     {" "}
-                    · <span className="text-slate-400">รหัส</span> <span className="font-num">{g.studentIdRange}</span>
+                    · <span className="text-slate-400">ID</span> <span className="font-num">{g.studentIdRange}</span>
                   </>
                 )}
               </span>
@@ -253,12 +253,12 @@ export function SeatingChart({ layout: input, large = false }: { layout: RoomLay
         })}
         {layout.chairs?.some((c) => !c.seat) && (
           <li className="flex items-center gap-2 text-slate-400">
-            <span className="h-3 w-3 flex-shrink-0 rounded border border-dashed border-slate-400" /> เก้าอี้ว่าง (เว้นไว้)
+            <span className="h-3 w-3 flex-shrink-0 rounded border border-dashed border-slate-400" /> Empty chair (left vacant)
           </li>
         )}
         {layout.doors.length > 0 && (
           <li className="flex items-center gap-2 text-slate-400">
-            <DoorOpen className="h-3.5 w-3.5 flex-shrink-0" /> ประตู
+            <DoorOpen className="h-3.5 w-3.5 flex-shrink-0" /> Door
           </li>
         )}
       </ul>
