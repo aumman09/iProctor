@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { DoorOpen, Info, OctagonX, TriangleAlert, type LucideIcon } from "lucide-react";
 
 export type AlertKind = "info" | "departure" | "warning" | "end";
@@ -12,6 +12,8 @@ export interface Alert {
   description: string;
   /** modal = ต้องกดปิด, toast = แสดงมุมบนแล้วหายเอง (ไม่รบกวนรายวิชาอื่น) */
   variant: "modal" | "toast";
+  /** modal ที่ปิดเองหลังเวลานี้ (ms) เช่น ครบ 45 นาที — ไม่ระบุ = ค้างจนกดปิด */
+  autoDismissMs?: number;
 }
 
 const KIND: Record<AlertKind, { icon: LucideIcon; cls: string }> = {
@@ -35,22 +37,39 @@ export function AlertCenter({ alerts, onDismiss }: { alerts: Alert[]; onDismiss:
         ))}
       </div>
 
-      {modal && (
-        <div className="fixed inset-0 bg-slate-950/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl p-8 lg:p-12 max-w-2xl w-full text-center shadow-2xl border border-slate-100 animate-[pop_200ms_ease-out]">
-            <AlertIcon kind={modal.kind} large />
-            <h3 className="text-2xl lg:text-4xl font-bold text-slate-900 mb-3">{modal.title}</h3>
-            <p className="text-slate-500 text-base lg:text-xl leading-relaxed mb-8">{modal.description}</p>
-            <button
-              onClick={() => onDismiss(modal.id)}
-              className="w-full py-3 bg-slate-950 hover:bg-slate-800 text-white font-medium rounded-xl text-sm transition shadow-sm"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
+      {modal && <Modal key={modal.id} alert={modal} onDismiss={onDismiss} />}
     </>
+  );
+}
+
+function Modal({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string) => void }) {
+  // ปิดเองตาม autoDismissMs พร้อมนับถอยหลังบนปุ่ม
+  const [left, setLeft] = useState(alert.autoDismissMs ? Math.ceil(alert.autoDismissMs / 1000) : null);
+  useEffect(() => {
+    if (!alert.autoDismissMs) return;
+    const startedAt = Date.now();
+    const id = setInterval(() => {
+      const remain = Math.ceil((alert.autoDismissMs! - (Date.now() - startedAt)) / 1000);
+      if (remain <= 0) onDismiss(alert.id);
+      else setLeft(remain);
+    }, 250);
+    return () => clearInterval(id);
+  }, [alert.autoDismissMs, alert.id, onDismiss]);
+
+  return (
+    <div className="fixed inset-0 bg-slate-950/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-3xl p-8 lg:p-12 max-w-2xl w-full text-center shadow-2xl border border-slate-100 animate-[pop_200ms_ease-out]">
+        <AlertIcon kind={alert.kind} large />
+        <h3 className="text-2xl lg:text-4xl font-bold text-slate-900 mb-3">{alert.title}</h3>
+        <p className="text-slate-500 text-base lg:text-xl leading-relaxed mb-8">{alert.description}</p>
+        <button
+          onClick={() => onDismiss(alert.id)}
+          className="w-full py-3 bg-slate-950 hover:bg-slate-800 text-white font-medium rounded-xl text-sm transition shadow-sm"
+        >
+          Dismiss{left !== null && <span className="ml-1.5 font-num text-slate-400">({left}s)</span>}
+        </button>
+      </div>
+    </div>
   );
 }
 

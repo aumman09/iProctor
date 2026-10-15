@@ -129,6 +129,7 @@ export function RoomController(props: RoomControllerProps) {
             kind: "departure",
             variant: "modal",
             title: "45 minutes have elapsed",
+            autoDismissMs: 10_000,
             description:
               "Students who have finished may now submit their answer sheets and leave the examination room quietly.",
           });
