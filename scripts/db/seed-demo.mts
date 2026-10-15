@@ -57,6 +57,12 @@ const twoCourses = (session: Session, a: string, b: string): Slot["courses"] => 
 const oneCourse = (session: Session, code: string, hours: 2 | 3 = 2): Slot["courses"] => [
   { courseCode: code, seatGroup: "", startTime: TIMES[session].start, endTime: hours === 3 ? TIMES[session].end3 : TIMES[session].end2, studentIdRange: range(code) },
 ];
+/** วิชาเดียวหลายกลุ่มเรียนในห้องเดียว (เลขที่นั่งล้วน) — แต่ละ sec มีช่วงที่นั่งของตัวเอง */
+const sections = (session: Session, code: string, ranges: Array<[number, number]>): Slot["courses"] =>
+  ranges.map(([from, to], i) => ({
+    courseCode: code, section: String(i + 1), seatGroup: "", startTime: TIMES[session].start, endTime: TIMES[session].end3,
+    seatFrom: String(from), seatTo: String(to),
+  }));
 const proctors = (head: string, assistant?: string): Slot["proctors"] =>
   assistant ? [{ staffId: head, role: "HEAD" }, { staffId: assistant, role: "ASSISTANT" }] : [{ staffId: head, role: "HEAD" }];
 
@@ -75,7 +81,8 @@ const midterm: ImportBatch = {
     slot("C2-402", today, "morning", twoCourses("morning", "1403110", "1601102"), proctors(ME, "60111222")), // 84 ที่ A/B
     slot("C3-107", today, "afternoon", twoCourses("afternoon", "1302301", "1501402"), proctors(ME, "60111222")), // 160 ที่ ไวท์บอร์ดบน
     slot("C5-318", shift(1), "morning", oneCourse("morning", "1003101"), proctors(ME)), // 48 ที่ ไวท์บอร์ดขวา
-    slot("E3B-101", shift(1), "afternoon", oneCourse("afternoon", "1802201", 3), proctors(ME, "61200002")), // 104 ที่ 4 ประตู
+    // วิชาเดียว 4 กลุ่มเรียน (sec) แบ่งช่วงที่นั่ง → การ์ดเดียวแสดง Sec 1–4 พร้อมช่วงที่นั่ง
+    slot("E3B-101", today, "afternoon", sections("afternoon", "1802201", [[1, 26], [27, 52], [53, 78], [79, 104]]), proctors(ME, "61200002")), // 104 ที่ 4 ประตู
     // ห้องอื่นรอบบ่ายวันนี้ (ให้ dashboard ของ Admin มีข้อมูล)
     slot("C2-403", today, "afternoon", twoCourses("afternoon", "1702303", "1903104"), proctors("59100001", "61200001")),
     slot("E4A-514", today, "afternoon", oneCourse("afternoon", "1104107", 3), proctors("59100002")),

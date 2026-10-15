@@ -136,6 +136,9 @@ export const slotCourses = pgTable(
     startTime: time("start_time").notNull(),
     endTime: time("end_time").notNull(),
     studentIdRange: text("student_id_range"),
+    /** ช่วงเลขที่นั่งของกลุ่มเรียนนี้ เช่น "1" – "20" หรือ "A1" – "A40" (ไม่มี = ใช้ช่วงของกลุ่มในผังห้อง) */
+    seatFrom: text("seat_from"),
+    seatTo: text("seat_to"),
     instructions: text("instructions"),
     /** ข้อกำหนดเพิ่มเติมจาก Admin — แสดงบนการ์ดรายวิชาในหน้าจอคุมสอบ (การนำเข้าไม่ทับ) */
     adminNote: text("admin_note"),

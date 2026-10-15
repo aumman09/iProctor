@@ -30,6 +30,8 @@ export interface Course {
   admin_note?: string;
   /** ISO time ที่ผู้คุมสอบกดยืนยันว่าสอบเสร็จ (null = ยังไม่เสร็จ) */
   completed_at?: string | null;
+  /** กลุ่มเรียนของวิชานี้ในห้อง (รวมเป็นการ์ดเดียว) + ช่วงเลขที่นั่ง — ไม่มีช่วง = ใช้ช่วงของกลุ่มในผังห้อง */
+  sections?: Array<{ section: string; seat_from?: string; seat_to?: string }>;
 }
 
 /** เวลาแจ้งเตือนที่ Admin ตั้งได้ (หน้า /admin/settings) */

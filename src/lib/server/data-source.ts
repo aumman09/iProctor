@@ -26,6 +26,30 @@ function bangkokNow(epoch: number) {
 const toMin = (hms: string) => Number(hms.slice(0, 2)) * 60 + Number(hms.slice(3, 5));
 const minutesBetween = (a: string, b: string) => toMin(b) - toMin(a);
 
+type SlotCourseRow = Awaited<ReturnType<typeof coursesOfSlots>>[number];
+
+/** รวมกลุ่มเรียนของวิชาเดียวกัน (รหัสวิชา + เวลาเริ่ม/จบ + กลุ่มที่นั่ง) เรียงตามเลข sec */
+function groupSections(rows: SlotCourseRow[]): SlotCourseRow[][] {
+  const groups = new Map<string, SlotCourseRow[]>();
+  for (const r of rows) {
+    const key = `${r.courseCode}|${r.startTime}|${r.endTime}|${r.seatGroup}`;
+    groups.set(key, [...(groups.get(key) ?? []), r]);
+  }
+  return [...groups.values()].map((g) => g.sort((a, b) => a.section.localeCompare(b.section, "en", { numeric: true })));
+}
+
+/** demo: กลุ่มที่นั่งเกิน 30 ที่ แบ่งเป็น 3 sec เท่า ๆ กัน (ตัวอย่างการแสดงหลายกลุ่มเรียน) */
+function demoSections(layout: RoomLayoutResponse, group: string): Course["sections"] {
+  const nums = layout.seats.filter((s) => s.group === group).map((s) => Number(s.id.slice(group.length))).sort((a, b) => a - b);
+  if (nums.length <= 30) return [{ section: "1" }];
+  const size = Math.ceil(nums.length / 3);
+  return [0, 1, 2].map((i) => ({
+    section: String(i + 1),
+    seat_from: `${group}${nums[i * size]}`,
+    seat_to: `${group}${nums[Math.min(nums.length, (i + 1) * size) - 1]}`,
+  }));
+}
+
 /** วิชาในรอบสอบ (เรียงตามกลุ่มที่นั่ง A, B, ...) */
 async function coursesOfSlots(slotIds: number[]) {
   if (!slotIds.length) return [];
@@ -41,6 +65,8 @@ async function coursesOfSlots(slotIds: number[]) {
       startTime: slotCourses.startTime,
       endTime: slotCourses.endTime,
       studentIdRange: slotCourses.studentIdRange,
+      seatFrom: slotCourses.seatFrom,
+      seatTo: slotCourses.seatTo,
       instructions: slotCourses.instructions,
       adminNote: slotCourses.adminNote,
       completedAt: slotCourses.completedAt,
@@ -95,22 +121,27 @@ export async function getRoomSchedule(roomId: string, date: string, session: Ses
     timing,
     rules_cues: rulesCues,
     proctors: ps.map((p) => ({ staff_id: p.staffId, name: p.name, role: p.role === "HEAD" ? "Head Proctor" : "Proctor" })),
-    courses: cs.map((c): Course => ({
-      course_id: String(c.id),
-      course_code: c.courseCode,
-      course_name: c.courseName,
-      section: c.section,
-      row_label: c.seatGroup,
-      seat_color_theme: c.seatColor,
-      seat_description: c.seatGroup ? `Seat ${c.seatGroup}` : "",
-      student_id_range: c.studentIdRange ?? "",
-      start_time: c.startTime,
-      end_time: c.endTime,
-      duration_minutes: minutesBetween(c.startTime, c.endTime),
-      instructions: c.instructions ?? undefined,
-      admin_note: c.adminNote ?? undefined,
-      completed_at: c.completedAt?.toISOString() ?? null,
-    })),
+    // หลายกลุ่มเรียน (sec) ของวิชาเดียวกัน เวลาเดียวกัน → การ์ด/ตัวจับเวลาเดียว
+    courses: groupSections(cs).map((g): Course => {
+      const c = g[0];
+      return {
+        course_id: String(c.id),
+        course_code: c.courseCode,
+        course_name: c.courseName,
+        section: g.map((x) => x.section).join(", "),
+        row_label: c.seatGroup,
+        seat_color_theme: c.seatColor,
+        seat_description: c.seatGroup ? `Seat ${c.seatGroup}` : "",
+        student_id_range: c.studentIdRange ?? "",
+        start_time: c.startTime,
+        end_time: c.endTime,
+        duration_minutes: minutesBetween(c.startTime, c.endTime),
+        instructions: c.instructions ?? undefined,
+        admin_note: g.map((x) => x.adminNote).filter(Boolean).join(" · ") || undefined,
+        completed_at: g.every((x) => x.completedAt) ? c.completedAt!.toISOString() : null,
+        sections: g.map((x) => ({ section: x.section, seat_from: x.seatFrom ?? undefined, seat_to: x.seatTo ?? undefined })),
+      };
+    }),
   };
 }
 
@@ -197,9 +228,8 @@ export async function getProctorDuties(
       isCurrentSession: canLaunch,
       status: past ? "COMPLETED" : canLaunch ? "LIVE" : "UPCOMING",
       canLaunch,
-      coursesSummary: cs
-        .filter((c) => c.slotId === s.id)
-        .map((c) => ({ courseCode: c.courseCode, courseName: c.courseName, rowLabel: c.seatGroup, seatColorTheme: c.seatColor })),
+      coursesSummary: groupSections(cs.filter((c) => c.slotId === s.id))
+        .map(([c]) => ({ courseCode: c.courseCode, courseName: c.courseName, rowLabel: c.seatGroup, seatColorTheme: c.seatColor })),
     };
   });
 }
@@ -220,7 +250,14 @@ export async function getRoomLayout(roomId: string): Promise<RoomLayoutResponse 
  */
 export async function setCourseCompletion(user: AuthUser, slotCourseId: number, completed: boolean) {
   const [row] = await db
-    .select({ id: slotCourses.id, slotId: slotCourses.slotId, roomId: examSlots.roomId, courseCode: slotCourses.courseCode })
+    .select({
+      id: slotCourses.id,
+      slotId: slotCourses.slotId,
+      roomId: examSlots.roomId,
+      courseCode: slotCourses.courseCode,
+      startTime: slotCourses.startTime,
+      endTime: slotCourses.endTime,
+    })
     .from(slotCourses)
     .innerJoin(examSlots, eq(examSlots.id, slotCourses.slotId))
     .where(eq(slotCourses.id, slotCourseId));
@@ -232,10 +269,18 @@ export async function setCourseCompletion(user: AuthUser, slotCourseId: number, 
       .where(and(eq(proctorAssignments.slotId, row.slotId), eq(proctorAssignments.staffId, user.staff_id)));
     if (!assigned) return { ok: false as const, status: 403 };
   }
+  // ทุกกลุ่มเรียนของวิชาเดียวกันในรอบนี้ (แสดงเป็นการ์ดเดียว) เปลี่ยนสถานะพร้อมกัน
   const [updated] = await db
     .update(slotCourses)
     .set(completed ? { completedAt: new Date(), completedBy: user.staff_id } : { completedAt: null, completedBy: null })
-    .where(eq(slotCourses.id, slotCourseId))
+    .where(
+      and(
+        eq(slotCourses.slotId, row.slotId),
+        eq(slotCourses.courseCode, row.courseCode),
+        eq(slotCourses.startTime, row.startTime),
+        eq(slotCourses.endTime, row.endTime),
+      ),
+    )
     .returning({ completedAt: slotCourses.completedAt });
   return { ok: true as const, roomId: row.roomId, courseCode: row.courseCode, completedAt: updated.completedAt?.toISOString() ?? null };
 }
@@ -265,6 +310,7 @@ export async function getDemoSchedule(roomId: string, date: string, session: Ses
     courses: layout.groups.map((g, i): Course => {
       const minutes = i === 0 ? 180 : 120;
       return {
+        sections: demoSections(layout, g.key),
         course_id: `demo-${g.key || "1"}`,
         course_code: `DEMO-${g.key || "1"}`,
         course_name: `Demo Course ${g.key || ""}`.trim(),

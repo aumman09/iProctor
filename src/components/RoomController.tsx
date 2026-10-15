@@ -234,7 +234,15 @@ export function RoomController(props: RoomControllerProps) {
             now={now}
             completedAt={completedAt(c.course.course_id)}
             onToggleComplete={() => setConfirming(c.course.course_id)}
-            seatLabel={seatRangeLabel(layout, c.course.row_label)}
+            sections={(c.course.sections ?? [{ section: c.course.section }]).map((s, _, all) => ({
+              section: s.section,
+              seats:
+                s.seat_from && s.seat_to
+                  ? `Seats ${s.seat_from} – ${s.seat_to}`
+                  : all.length === 1
+                    ? seatRangeLabel(layout, c.course.row_label)
+                    : "",
+            }))}
           />
         ))}
       </main>
@@ -281,7 +289,17 @@ export function RoomController(props: RoomControllerProps) {
           onClose={() => setSeatingOverride(false)}
         />
       )}
-      {showSlides && <InstructionSlides schedule={schedule} engine={audio.engine} onClose={() => setSlides(null)} />}
+      {showSlides && (
+        <InstructionSlides
+          schedule={schedule}
+          engine={audio.engine}
+          onClose={() => {
+            // ปิดหน้าระเบียบการสอบ = หยุดเสียงอ่านด้วย
+            audio.engine.stopRules();
+            setSlides(null);
+          }}
+        />
+      )}
       <AlertCenter alerts={alerts} onDismiss={dismissAlert} />
       {confirmingCourse && (
         <CompletionDialog

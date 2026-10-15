@@ -36,6 +36,9 @@ export interface ImportBatch {
       startTime: string;
       endTime: string;
       studentIdRange?: string;
+      /** ช่วงเลขที่นั่งของกลุ่มเรียนนี้ เช่น "1" – "20" (ไม่ระบุ = ทั้งกลุ่มที่นั่งในผัง) */
+      seatFrom?: string;
+      seatTo?: string;
       instructions?: string;
     }>;
     proctors: Array<{ staffId: string; role: "HEAD" | "ASSISTANT" }>;
@@ -132,6 +135,8 @@ export async function importBatch(db: DB, batch: ImportBatch, source: string) {
             startTime: c.startTime,
             endTime: c.endTime,
             studentIdRange: c.studentIdRange,
+            seatFrom: c.seatFrom,
+            seatTo: c.seatTo,
             instructions: c.instructions,
           }];
         });
@@ -148,6 +153,8 @@ export async function importBatch(db: DB, batch: ImportBatch, source: string) {
                 startTime: v.startTime,
                 endTime: v.endTime,
                 studentIdRange: v.studentIdRange ?? null,
+                seatFrom: v.seatFrom ?? null,
+                seatTo: v.seatTo ?? null,
                 instructions: v.instructions ?? null,
                 updatedAt: now,
               },

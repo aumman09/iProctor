@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Megaphone, ShieldAlert, Volume2, X } from "lucide-react";
 import type { AudioEngine } from "@/lib/audio-engine";
 import { DEFAULT_RULES_CUES, EXAM_RULES, RULES_HEADING, RULES_WARNING, activeCue } from "@/lib/exam-rules";
@@ -36,10 +36,24 @@ export function InstructionSlides({
 }) {
   const cues = schedule.rules_cues ?? DEFAULT_RULES_CUES;
   const [active, setActive] = useState(-1);
+  // เสียงอ่านจบ → รอ 2 วินาทีแล้วกลับหน้าจอคุมสอบเอง (เปิดเองโดยไม่มีเสียง = ค้างไว้จนกดปิด)
+  const heard = useRef(false);
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
 
   useEffect(() => {
-    const id = setInterval(() => setActive(activeCue(cues, engine.rulesPosition())), 200);
-    return () => clearInterval(id);
+    let closing: ReturnType<typeof setTimeout> | null = null;
+    const id = setInterval(() => {
+      setActive(activeCue(cues, engine.rulesPosition()));
+      if (engine.isPlayingRules()) heard.current = true;
+      else if (heard.current && !closing) closing = setTimeout(() => closeRef.current(), 2000);
+    }, 200);
+    return () => {
+      clearInterval(id);
+      if (closing) clearTimeout(closing);
+    };
   }, [cues, engine]);
 
   const playing = active >= 0;
@@ -97,12 +111,12 @@ export function InstructionSlides({
       </ol>
 
       <section
-        className={`mt-[1.6vh] flex items-center gap-[1.5vw] rounded-2xl border-2 px-[2vw] py-[1.4vh] transition-all duration-300 ${
+        className={`mt-[1.6vh] flex items-center justify-center gap-[1.5vw] rounded-2xl border-2 px-[2vw] py-[1.4vh] transition-all duration-300 ${
           playing && active === WARNING_CUE ? "border-rose-500 bg-rose-50 shadow-lg ring-4 ring-rose-200" : "border-rose-200 bg-rose-50/60"
         } ${playing && active !== WARNING_CUE ? "opacity-60" : ""}`}
       >
         <ShieldAlert className="h-[5vh] w-[5vh] flex-shrink-0 text-rose-600" />
-        <div>
+        <div className="text-center">
           <p className="text-[clamp(1.05rem,2.8vh,2rem)] font-bold leading-snug text-slate-900">{redF(RULES_WARNING.en)}</p>
           <p className="text-[clamp(0.85rem,2vh,1.4rem)] leading-snug text-slate-500">{redF(RULES_WARNING.th)}</p>
         </div>

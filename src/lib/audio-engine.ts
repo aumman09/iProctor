@@ -49,6 +49,26 @@ export class AudioEngine {
   /** เวลา (ctx) ที่เริ่มเล่นไฟล์ระเบียบการสอบมาตรฐาน — ใช้ไฮไลต์ข้อที่กำลังอ่าน (ไฟล์กำหนดเองไม่นับ) */
   private rulesStartedAt: number | null = null;
   private rulesIsCustom = false;
+  /** เสียงไฟล์ที่กำลังเล่น (ใช้หยุดกลางคัน) */
+  private source: AudioBufferSourceNode | null = null;
+  private sourceCue: AudioCue | null = null;
+
+  /** กำลังเล่นเสียงระเบียบการสอบอยู่ (ทั้งไฟล์มาตรฐานและไฟล์กำหนดเอง) */
+  isPlayingRules(): boolean {
+    return this.sourceCue === "rules";
+  }
+
+  /** หยุดเสียงระเบียบการสอบทันที และเอาออกจากคิว (ปิดหน้าระเบียบการสอบ = เสียงหยุดด้วย) */
+  stopRules() {
+    this.queue = this.queue.filter((c) => c !== "rules");
+    if (this.sourceCue === "rules") {
+      try {
+        this.source?.stop();
+      } catch {
+        // หยุดไปแล้ว
+      }
+    }
+  }
 
   /** วินาทีที่เล่นไฟล์ระเบียบการสอบมาตรฐานไปแล้ว — null = ไม่ได้เล่นอยู่ */
   rulesPosition(): number | null {
@@ -187,19 +207,33 @@ export class AudioEngine {
     const buf = await this.load(cue);
     if (!buf) return this.playNotes(FALLBACK_CHIMES[cue]);
     const track = cue === "rules" && !this.rulesIsCustom;
-    await this.playBuffer(buf, (at) => {
-      if (track) this.rulesStartedAt = at;
-    });
+    await this.playBuffer(
+      buf,
+      (at) => {
+        if (track) this.rulesStartedAt = at;
+      },
+      cue,
+    );
     if (track) this.rulesStartedAt = null;
   }
 
-  private playBuffer(buf: AudioBuffer, onStart?: (ctxTime: number) => void) {
+  private playBuffer(buf: AudioBuffer, onStart?: (ctxTime: number) => void, cue?: AudioCue) {
     const ctx = this.ctx!;
     return new Promise<void>((resolve) => {
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.connect(ctx.destination);
-      src.onended = () => resolve();
+      this.source = src;
+      this.sourceCue = cue ?? null;
+      this.emit();
+      src.onended = () => {
+        if (this.source === src) {
+          this.source = null;
+          this.sourceCue = null;
+          this.emit();
+        }
+        resolve();
+      };
       const at = ctx.currentTime;
       src.start(at);
       onStart?.(at);

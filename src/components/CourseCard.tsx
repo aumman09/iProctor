@@ -14,15 +14,15 @@ export function CourseCard({
   now,
   completedAt,
   onToggleComplete,
-  seatLabel,
+  sections,
 }: {
   state: CourseState;
   now: number;
   /** ISO time ที่ยืนยันสอบเสร็จ (null = ยังไม่เสร็จ) */
   completedAt: string | null;
   onToggleComplete: () => void;
-  /** ช่วงเลขที่นั่งจากผังห้อง เช่น "Seats A1 – A80" (แทนช่วงรหัสนักศึกษา) */
-  seatLabel: string;
+  /** กลุ่มเรียนและช่วงเลขที่นั่ง เช่น { section: "1", seats: "Seats 1 – 20" } */
+  sections: Array<{ section: string; seats: string }>;
 }) {
   const { course, status, remainingMs, startAt } = state;
   const seat = SEAT_THEME[course.seat_color_theme] ?? SEAT_THEME.white;
@@ -44,9 +44,6 @@ export function CourseCard({
               <span className="text-xs lg:text-sm font-semibold text-slate-400 font-num">
                 {shortTime(course.start_time)} - {shortTime(course.end_time)}
               </span>
-              <span className="text-[10px] lg:text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
-                Sec {course.section}
-              </span>
               <span className={`text-[10px] lg:text-xs px-2 py-0.5 rounded-full border font-medium ${seat.pill}`}>
                 {durationLabel(course.duration_minutes)}
               </span>
@@ -55,7 +52,18 @@ export function CourseCard({
               <span className="font-bold font-num text-slate-950 mr-2">{course.course_code}</span>
               {course.course_name}
             </h2>
-            <p className={`mt-1 text-sm font-semibold lg:text-base ${seat.text}`}>{seatLabel}</p>
+            {/* หลาย sec: เรียงลงทีละ 3 แถวแล้วขึ้นคอลัมน์ใหม่ */}
+            <ul
+              className={`mt-[0.6vh] grid grid-flow-col auto-cols-max gap-x-8 gap-y-0.5 text-[clamp(0.85rem,2.1vh,1.05rem)] ${seat.text}`}
+              style={{ gridTemplateRows: `repeat(${Math.min(3, sections.length)}, auto)` }}
+            >
+              {sections.map((s) => (
+                <li key={s.section} className="whitespace-nowrap">
+                  <span className="font-semibold text-slate-500">Sec {s.section}</span>
+                  {s.seats && <span className="ml-2 font-semibold">{s.seats}</span>}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 

@@ -127,7 +127,7 @@ function SimControls({ schedule, timeline, speed, onJump, onSpeed }: NonNullable
       {timeline.map((ev) => (
         <button key={ev.id} onClick={() => onJump(ev.at - 5000)} className={`${btn} text-indigo-600`}>
           → {ev.type === "COURSE_WARNING" && ev.minutesLeft ? `${ev.minutesLeft} min warning` : EVENT_LABEL[ev.type]}
-          {ev.courseId && ` (${rowOf(ev.courseId)})`}
+          {ev.courseId && rowOf(ev.courseId) && ` (${rowOf(ev.courseId)})`}
           <span className="font-num text-slate-400">{formatClock(ev.at).slice(0, 5)}</span>
         </button>
       ))}
