@@ -85,7 +85,7 @@ export function DailyBars({ data }: { data: Array<{ label: string; value: number
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
     <div>
-      <div className="flex h-40 items-end gap-2 border-b border-slate-200" role="img" aria-label="Daily usage">
+      <div className="flex h-40 items-end gap-2 border-b border-slate-200" role="img" aria-label="Daily Usage">
         {data.map((d) => (
           <div key={d.label} className="group relative flex h-full flex-1 items-end justify-center">
             <div
@@ -133,7 +133,7 @@ export function ScreenLight({
         {live && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />}
         <span className={`relative inline-flex h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-400"}`} />
       </span>
-      {live ? "Proctoring now" : "Screen closed"}
+      {live ? "Proctoring Now" : "Screen Closed"}
       {!compact && <span className="font-num font-normal opacity-80">· opened {hm(screen.openedAt)}</span>}
     </span>
   );

@@ -64,7 +64,7 @@ export async function saveTimingSettings(_prev: ActionState, form: FormData): Pr
   await saveAlertTiming(timing, user.staff_id);
   await logUsage("SETTINGS_UPDATED", { staffId: user.staff_id, meta: { alertTiming: timing } });
   revalidatePath("/admin", "layout");
-  return { ok: true, message: "Alert timing saved — exam screens use it after a reload" };
+  return { ok: true, message: "Alert Timing saved — exam screens use it after a reload" };
 }
 
 /** เวลาเริ่มแต่ละช่วงของเสียงระเบียบการสอบ (ไฮไลต์บนจอให้ตรงเสียง) */

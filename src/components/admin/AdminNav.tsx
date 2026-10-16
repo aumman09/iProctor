@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { BellRing, CalendarCheck, DoorOpen, LayoutDashboard, LogOut, MonitorPlay, type LucideIcon } from "lucide-react";
 
 const NAV: { href: string; label: string; sub: string; icon: LucideIcon }[] = [
-  { href: "/admin", label: "Dashboard", sub: "Overview & usage", icon: LayoutDashboard },
-  { href: "/admin/exams", label: "Exams & courses", sub: "Submission · course notes", icon: CalendarCheck },
-  { href: "/admin/rooms", label: "Exam rooms", sub: "Seating · demo screen", icon: DoorOpen },
-  { href: "/admin/settings", label: "Settings", sub: "Alert timing · rules audio", icon: BellRing },
+  { href: "/admin", label: "Dashboard", sub: "Overview & Usage", icon: LayoutDashboard },
+  { href: "/admin/exams", label: "Exam Schedule", sub: "Submission · Course Notes", icon: CalendarCheck },
+  { href: "/admin/rooms", label: "Exam Rooms", sub: "Seating · Demo Screen", icon: DoorOpen },
+  { href: "/admin/settings", label: "Settings", sub: "Alert Timing · Rules Audio", icon: BellRing },
 ];
 
 export function AdminNav({ name, logout }: { name: string; logout: () => Promise<void> }) {
@@ -25,7 +25,7 @@ export function AdminNav({ name, logout }: { name: string; logout: () => Promise
           <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Admin Panel</p>
         </div>
         <form action={logout} className="lg:hidden">
-          <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Sign out">
+          <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Sign Out">
             <LogOut className="h-4 w-4" />
           </button>
         </form>
@@ -52,7 +52,7 @@ export function AdminNav({ name, logout }: { name: string; logout: () => Promise
           className="flex flex-shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-slate-600 transition hover:bg-slate-100 lg:mt-4 lg:border-t lg:border-slate-100 lg:pt-4"
         >
           <MonitorPlay className="h-5 w-5 flex-shrink-0" />
-          <span className="whitespace-nowrap text-sm font-semibold">Proctor portal</span>
+          <span className="whitespace-nowrap text-sm font-semibold">Proctor Portal</span>
         </Link>
       </nav>
 
@@ -60,7 +60,7 @@ export function AdminNav({ name, logout }: { name: string; logout: () => Promise
         <p className="truncate text-sm font-medium text-slate-900">{name}</p>
         <form action={logout}>
           <button className="mt-1 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900">
-            <LogOut className="h-4 w-4" /> Sign out
+            <LogOut className="h-4 w-4" /> Sign Out
           </button>
         </form>
       </div>

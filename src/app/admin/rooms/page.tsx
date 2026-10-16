@@ -17,8 +17,8 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
   return (
     <>
       <PageHeader
-        title="Exam rooms"
-        sub={`${all.length} rooms · ${buildings.length} buildings — layouts from the Registrar's PDFs · use “Demo screen” to test the exam screen with a room's layout`}
+        title="Exam Rooms"
+        sub={`${all.length} rooms · ${buildings.length} buildings — layouts from the Registrar's PDFs · use “Demo Screen” to test the exam screen with a room's layout`}
       />
 
       <form method="get" className="mb-6 flex flex-wrap items-center gap-2">
@@ -40,7 +40,7 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
         <div className="relative ml-auto min-w-48">
           {building && <input type="hidden" name="b" value={building} />}
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input name="q" defaultValue={q} placeholder="Search room" className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm" />
+          <input name="q" defaultValue={q} placeholder="Search Room" className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm" />
         </div>
       </form>
 
@@ -76,7 +76,7 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
                 href={`/room/${r.id}?session=afternoon&sim=13:14:45&speed=1&demo=1`}
                 className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800"
               >
-                <MonitorPlay className="h-4 w-4" /> Demo screen
+                <MonitorPlay className="h-4 w-4" /> Demo Screen
               </Link>
             </div>
           </article>

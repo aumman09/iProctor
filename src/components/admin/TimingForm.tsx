@@ -21,15 +21,15 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
   const valid = (n: number, min: number, max: number) => Number.isInteger(n) && n >= min && n <= max;
   const sorted = [...new Set(warnings.filter((w) => valid(w, 1, 120)))].sort((a, b) => b - a);
   const preview = [
-    { time: at("13:30", -roomOpen), label: "Room open · seating plan · welcome audio" },
-    { time: "13:30", label: "Exam start · exam rules" },
-    { time: at("13:30", departure), label: "Leaving allowed (chime)" },
+    { time: at("13:30", -roomOpen), label: "Room Open · Seating Plan · Welcome Audio" },
+    { time: "13:30", label: "Exam Start · Exam Rules" },
+    { time: at("13:30", departure), label: "Leaving Allowed (Chime)" },
     ...sorted.flatMap((w) => [
-      { time: at("15:30", -w), label: `${w} min left — 2-hour course` },
-      { time: at("16:30", -w), label: `${w} min left — 3-hour course` },
+      { time: at("15:30", -w), label: `${w} Min Left — 2-Hour Course` },
+      { time: at("16:30", -w), label: `${w} Min Left — 3-Hour Course` },
     ]),
-    { time: "15:30", label: "Time up — 2-hour course" },
-    { time: "16:30", label: "Time up — 3-hour course" },
+    { time: "15:30", label: "Time Up — 2-Hour Course" },
+    { time: "16:30", label: "Time Up — 3-Hour Course" },
   ].sort((a, b) => a.time.localeCompare(b.time));
 
   const num = "w-24 rounded-xl border border-slate-200 px-3 py-2 text-right font-num text-sm focus:border-slate-400 focus:outline-none";
@@ -37,15 +37,15 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <form action={action} className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-3">
-        <Row label="Open room before start" hint="Full-screen seating plan + welcome audio (0–120 min)">
+        <Row label="Open Room Before Start" hint="Full-screen seating plan + welcome audio (0–120 min)">
           <input name="roomOpenBeforeMin" type="number" min={0} max={120} value={roomOpen} onChange={(e) => setRoomOpen(Number(e.target.value))} className={num} />
           <span className="text-sm text-slate-500">min</span>
         </Row>
-        <Row label="Allow leaving after start" hint="Popup + chime (0–240 min)">
+        <Row label="Allow Leaving After Start" hint="Popup + chime (0–240 min)">
           <input name="departureAfterMin" type="number" min={0} max={240} value={departure} onChange={(e) => setDeparture(Number(e.target.value))} className={num} />
           <span className="text-sm text-slate-500">min</span>
         </Row>
-        <Row label="Warn before a course ends" hint="Up to 5 warnings (1–120 min) · one chime each">
+        <Row label="Warn Before a Course Ends" hint="Up to 5 warnings (1–120 min) · one chime each">
           <div className="flex flex-wrap items-center gap-2">
             {warnings.map((w, i) => (
               <span key={i} className="inline-flex items-center gap-1 rounded-xl border border-slate-200 py-1 pl-2 pr-1">
@@ -76,7 +76,7 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
                 onClick={() => setWarnings((ws) => [...ws, 5])}
                 className="inline-flex items-center gap-1 rounded-xl border border-dashed border-slate-300 px-3 py-1.5 text-sm text-slate-500 hover:border-slate-400 hover:text-slate-900"
               >
-                <Plus className="h-4 w-4" /> Add warning
+                <Plus className="h-4 w-4" /> Add Warning
               </button>
             )}
             {warnings.length === 0 && <span className="text-sm text-slate-400">No warnings before time is up</span>}
@@ -96,14 +96,14 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
             }}
             className="rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-100"
           >
-            Reset to defaults (15 / 45 / 10)
+            Reset to Defaults (15 / 45 / 10)
           </button>
           {state && <span className={`text-sm ${state.ok ? "text-emerald-600" : "text-rose-600"}`}>{state.message}</span>}
         </div>
       </form>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-2">
-        <h2 className="font-semibold text-slate-900">Timeline preview</h2>
+        <h2 className="font-semibold text-slate-900">Timeline Preview</h2>
         <p className="mt-0.5 text-xs text-slate-500">Afternoon session 13:30 · a 3-hour and a 2-hour course in one room</p>
         <ol className="mt-4 space-y-0">
           {preview.map((p, i) => (

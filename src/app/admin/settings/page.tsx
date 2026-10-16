@@ -8,9 +8,9 @@ export default async function AdminSettings() {
   return (
     <>
       <PageHeader title="Settings" sub="Applies to every exam screen — screens that are already open pick up changes after a reload" />
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-400">Alert timing</h2>
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-400">Alert Timing</h2>
       <TimingForm initial={timing} />
-      <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-slate-400">Exam rules audio</h2>
+      <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-slate-400">Exam Rules Audio</h2>
       <RulesSyncForm initial={cues} />
     </>
   );

@@ -32,7 +32,7 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
     <>
       <AutoRefresh />
       <PageHeader
-        title="Exams & courses"
+        title="Exam Schedule"
         sub="Exam screen status (green = proctoring now), course submission and extra course notes — refreshes every 30 seconds"
       />
 
@@ -44,18 +44,18 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
         </select>
         <input type="date" name="date" defaultValue={date} className={field} />
         <select name="session" defaultValue={session ?? ""} className={field}>
-          <option value="">All sessions</option>
+          <option value="">All Sessions</option>
           <option value="morning">Morning</option>
           <option value="afternoon">Afternoon</option>
         </select>
         <select name="status" defaultValue={status ?? ""} className={field}>
-          <option value="">All statuses</option>
-          <option value="pending">Not submitted</option>
+          <option value="">All Statuses</option>
+          <option value="pending">Not Submitted</option>
           <option value="done">Submitted</option>
         </select>
         <div className="relative min-w-48 flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input name="q" defaultValue={q} placeholder="Room, course code or course name" className={`${field} w-full pl-9`} />
+          <input name="q" defaultValue={q} placeholder="Room, Course Code or Course Name" className={`${field} w-full pl-9`} />
         </div>
         <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white">Filter</button>
         <Link href="/admin/exams" className="px-2 text-sm text-slate-500 hover:text-slate-900">
@@ -87,7 +87,7 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs text-slate-500">
                       <UserRound className="h-3.5 w-3.5" />
-                      {s.proctors.map((p) => `${p.name}${p.role === "HEAD" ? " (head)" : ""}`).join(", ") || "No proctor assigned"}
+                      {s.proctors.map((p) => `${p.name}${p.role === "HEAD" ? " (Head)" : ""}`).join(", ") || "No Proctor Assigned"}
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -105,7 +105,7 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
                       href={`/room/${s.roomId}?date=${s.date}&session=${s.session}`}
                       className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                     >
-                      <MonitorPlay className="h-3.5 w-3.5" /> Exam screen
+                      <MonitorPlay className="h-3.5 w-3.5" /> Exam Screen
                     </Link>
                   </div>
                 </header>
@@ -144,9 +144,9 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
                           </>
                         ) : (
                           <>
-                            <StatusChip done={false}>Not submitted</StatusChip>
+                            <StatusChip done={false}>Not Submitted</StatusChip>
                             <button className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                              Mark as submitted
+                              Mark as Submitted
                             </button>
                           </>
                         )}

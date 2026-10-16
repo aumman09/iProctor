@@ -61,8 +61,8 @@ export function InstructionSlides({
     playing && i === active
       ? "border-slate-900 bg-white shadow-lg ring-4 ring-slate-900/10"
       : `border-slate-200 bg-white ${playing ? "opacity-45" : ""}`;
-  const en = "text-[clamp(0.6rem,min(2.35vh,1.75vw),1.65rem)] font-semibold leading-snug text-slate-900";
-  const th = "mt-[0.4vh] text-[clamp(0.55rem,min(1.85vh,1.4vw),1.3rem)] leading-snug text-slate-500";
+  const en = "text-[clamp(0.6rem,min(2.2vh,1.6vw),1.6rem)] font-semibold leading-snug text-slate-900";
+  const th = "mt-[0.4vh] text-[clamp(0.55rem,min(1.75vh,1.3vw),1.25rem)] leading-snug text-slate-500";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-[#FBFBFD] px-[3vw] py-[2.5vh] animate-[pop_300ms_ease-out]">

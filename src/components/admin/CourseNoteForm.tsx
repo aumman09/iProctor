@@ -26,7 +26,7 @@ export function CourseNoteForm({ slotCourseId, note }: { slotCourseId: number; n
           className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
         >
           {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
-          {note ? "Edit" : "Add note"}
+          {note ? "Edit" : "Add Note"}
         </button>
         {state?.ok && <span className="text-xs text-emerald-600">{state.message}</span>}
       </div>

@@ -29,8 +29,8 @@ export const EXAM_RULES: ExamRule[] = [
     th: "ผู้เข้าสอบโปรดอ่านคำสั่ง ในใบปะหน้าข้อสอบพร้อมลงลายมือชื่อรับทราบ และตรวจนับจำนวนหน้าของข้อสอบ ก่อนเริ่มทำข้อสอบ",
   },
   {
-    en: "You are not permitted to use the restroom. You may leave the examination room only after 45 minutes of the examination time have elapsed.",
-    th: "ไม่อนุญาตให้ผู้เข้าสอบเข้าห้องน้ำระหว่างการสอบ และผู้เข้าสอบสามารถออกจากห้องสอบได้เมื่อการสอบดำเนินไปแล้วอย่างน้อย 45 นาที",
+    en: "You are not permitted to use the restroom. Once you have completed the Exam you can leave the examination room only after 45 minutes of the examination time have elapsed.",
+    th: "ไม่อนุญาตให้ผู้เข้าสอบเข้าห้องน้ำระหว่างการสอบ หากผู้เข้าสอบทำข้อสอบเสร็จแล้วสามารถออกจากห้องสอบได้เมื่อการสอบดำเนินไปแล้วอย่างน้อย 45 นาที",
   },
   {
     en: "After submitting the examination paper, you must leave the examination area immediately. Violation of the above clause will result in a penalty.",

@@ -63,9 +63,9 @@ export function RulesSyncForm({ initial }: { initial: number[] }) {
     <form action={action} className="rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold text-slate-900">Exam rules audio sync</h2>
+          <h2 className="font-semibold text-slate-900">Exam Rules Audio Sync</h2>
           <p className="mt-0.5 max-w-2xl text-xs text-slate-500">
-            Highlights the rule being read aloud on the exam screen. Press <b>Start marking</b>, then press <b>Mark next</b> (or Space) each
+            Highlights the rule being read aloud on the exam screen. Press <b>Start Marking</b>, then press <b>Mark Next</b> (or Space) each
             time the audio starts the next part. Play to preview, then save.
           </p>
         </div>
@@ -91,7 +91,7 @@ export function RulesSyncForm({ initial }: { initial: number[] }) {
           </button>
           {marking === null ? (
             <button type="button" onClick={startMarking} className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-              Start marking
+              Start Marking
             </button>
           ) : (
             <button
@@ -99,7 +99,7 @@ export function RulesSyncForm({ initial }: { initial: number[] }) {
               onClick={markNext}
               className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
             >
-              <StepForward className="h-4 w-4" /> Mark next: {PARTS[marking].label}
+              <StepForward className="h-4 w-4" /> Mark Next: {PARTS[marking].label}
             </button>
           )}
         </div>
@@ -141,7 +141,7 @@ export function RulesSyncForm({ initial }: { initial: number[] }) {
           onClick={() => setCues(DEFAULT_RULES_CUES)}
           className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-100"
         >
-          <RotateCcw className="h-4 w-4" /> Reset to estimate
+          <RotateCcw className="h-4 w-4" /> Reset to Estimate
         </button>
         {state && <span className={`text-sm ${state.ok ? "text-emerald-600" : "text-rose-600"}`}>{state.message}</span>}
       </div>
