@@ -48,10 +48,11 @@ export const RULES_WARNING: ExamRule = {
 export const RULES_CUE_COUNT = 2 + EXAM_RULES.length;
 
 /**
- * วินาทีที่เสียงเริ่มอ่านแต่ละช่วง (หัวเรื่อง, ข้อ 1–6, คำเตือน) — ค่าประมาณจากช่วงเงียบในไฟล์เสียง
- * ปรับให้ตรงได้ที่ Admin → Alert timing → "Sync rules highlight with audio"
+ * วินาทีที่เสียงเริ่มอ่านแต่ละช่วง (หัวเรื่อง, ข้อ 1–6, คำเตือน) ของไฟล์ 02_exam_rules.mp3 ชุด 16 ต.ค. 2026 (130 วินาที)
+ * ได้จากค่าที่ซิงก์ด้วยหูบน beta (ไฟล์ชุดก่อน) เลื่อนตามช่วงเงียบของไฟล์ใหม่
+ * เปลี่ยนไฟล์เสียงเมื่อไร ให้ซิงก์ใหม่ที่ Admin → Settings → "Exam rules audio sync"
  */
-export const DEFAULT_RULES_CUES = [0, 6.2, 29.5, 38.1, 53.8, 73.7, 95.4, 117.7];
+export const DEFAULT_RULES_CUES = [0, 6.3, 29.9, 38.4, 54.3, 70.8, 93, 113.5];
 
 /** ช่วงที่กำลังอ่าน ณ วินาที t (-1 = ยังไม่เริ่ม/ไม่ได้เล่น) */
 export function activeCue(cues: number[], t: number | null): number {

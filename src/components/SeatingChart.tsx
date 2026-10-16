@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { ArrowLeft, ArrowRight, DoorOpen, Projector } from "lucide-react";
+import { DoorOpen, Projector } from "lucide-react";
 import type { LayoutBox, RoomLayoutResponse, SeatColorTheme, Wall } from "@/lib/types";
 import { SEAT_THEME } from "./seat-theme";
 
@@ -50,54 +50,10 @@ function fitLabelPt(layout: RoomLayoutResponse): number {
 }
 
 /**
- * หมุนผังกลับเป็นแนวกระดาษต้นฉบับ (ไวท์บอร์ดอยู่ด้านข้าง) — ผังในไฟล์ถูกหมุนให้หน้าห้องอยู่บน (ดู import_pdf.py)
- * ใช้บนจอโปรเจกเตอร์กับห้องที่หมุนแล้วกลายเป็นแนวตั้ง จะได้ผังกว้างเต็มจอ ตัวเลขใหญ่ขึ้น
- */
-function toPaperOrientation(l: RoomLayoutResponse): RoomLayoutResponse {
-  const front = l.source?.front;
-  if (front !== "LEFT" && front !== "RIGHT") return l;
-  const { w, h } = l.size; // บนกระดาษ: กว้าง = h, สูง = w
-  const W = h;
-  const H = w;
-  const pt = (x: number, y: number): [number, number] => (front === "LEFT" ? [y, w - x] : [h - y, x]);
-  const box = <T extends LayoutBox>(b: T): T => {
-    const [x0, y0] = pt(b.x, b.y);
-    const [x1, y1] = pt(b.x + b.w, b.y + b.h);
-    return { ...b, x: Math.min(x0, x1), y: Math.min(y0, y1), w: Math.abs(x1 - x0), h: Math.abs(y1 - y0) };
-  };
-  const doorPoint = (d: { wall: Wall; at: number }): [number, number] =>
-    d.wall === "TOP" ? [d.at * w, 0] : d.wall === "BOTTOM" ? [d.at * w, h] : d.wall === "LEFT" ? [0, d.at * h] : [w, d.at * h];
-  return {
-    ...l,
-    size: { w: W, h: H },
-    whiteboard: l.whiteboard && box(l.whiteboard),
-    desks: l.desks?.map(box),
-    chairs: l.chairs?.map(box),
-    seats: l.seats.map((s) => {
-      const [x, y] = pt(s.x, s.y);
-      return { ...s, x, y };
-    }),
-    rowLabels: l.rowLabels?.map((r) => {
-      const [x, y] = pt(r.x, r.y);
-      return { ...r, x, y };
-    }),
-    doors: l.doors.map((d) => {
-      const [x, y] = pt(...doorPoint(d));
-      const dist: Record<Wall, number> = { TOP: y, BOTTOM: H - y, LEFT: x, RIGHT: W - x };
-      const wall = (Object.keys(dist) as Wall[]).reduce((a, b) => (dist[a] <= dist[b] ? a : b));
-      return { wall, at: wall === "TOP" || wall === "BOTTOM" ? x / W : y / H };
-    }),
-  };
-}
-
-/**
  * ผังที่นั่งตามแบบผังจริงของสำนักทะเบียน (โต๊ะ/เก้าอี้/ประตูตามตำแหน่งจริง) (FR-03)
- * ปกติหน้าห้องอยู่ด้านบน; large (จอโปรเจกเตอร์) + ห้องแนวตั้ง → แสดงตามแนวกระดาษ ไวท์บอร์ดอยู่ด้านข้าง
+ * หน้าห้อง (ไวท์บอร์ด/โปรเจกเตอร์) อยู่ด้านบนเสมอ — เหมือนนักศึกษาเดินเข้าห้องแล้วเห็นจอข้างหน้า
  */
-export function SeatingChart({ layout: input, large = false }: { layout: RoomLayoutResponse; large?: boolean }) {
-  const paper = large && input.size.h > input.size.w && (input.source?.front === "LEFT" || input.source?.front === "RIGHT");
-  const layout = paper ? toPaperOrientation(input) : input;
-  const front: Wall = paper ? input.source!.front : "TOP";
+export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResponse; large?: boolean }) {
   const { w, h } = layout.size;
   const groups = new Map(layout.groups.map((g) => [g.key, g]));
   const seatGroup = new Map(layout.seats.map((s) => [s.id, groups.get(s.group)]));
@@ -142,16 +98,8 @@ export function SeatingChart({ layout: input, large = false }: { layout: RoomLay
               : `min(100%, calc((100vh - 240px) * ${((w / h) * (1 + 2 * k)).toFixed(3)}))`,
           }}
         >
-          <div
-            className={`mb-2 flex items-center gap-1.5 font-medium text-slate-500 ${text} ${
-              front === "LEFT" ? "justify-start" : front === "RIGHT" ? "justify-end" : "justify-center"
-            }`}
-          >
-            {front === "LEFT" && <ArrowLeft className="w-4 h-4" />}
-            <Projector className="w-4 h-4" /> Front of room (whiteboard)
-            {front === "LEFT" && " on the left"}
-            {front === "RIGHT" && " on the right"}
-            {front === "RIGHT" && <ArrowRight className="w-4 h-4" />}
+          <div className={`mb-2 flex items-center justify-center gap-1.5 font-medium text-slate-500 ${text}`}>
+            <Projector className="w-4 h-4" /> Front of room (projector / whiteboard)
           </div>
 
           <div
