@@ -41,7 +41,7 @@ export function CourseCard({
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs lg:text-sm font-semibold text-slate-400 font-num">
+              <span className="text-xs lg:text-sm font-semibold text-slate-600 font-num">
                 {shortTime(course.start_time)} - {shortTime(course.end_time)}
               </span>
               <span className={`text-[10px] lg:text-xs px-2 py-0.5 rounded-full border font-medium ${seat.pill}`}>
@@ -59,7 +59,7 @@ export function CourseCard({
             >
               {sections.map((s) => (
                 <li key={s.section} className="whitespace-nowrap">
-                  <span className="font-semibold text-slate-500">Sec {s.section}</span>
+                  <span className="font-semibold text-slate-700">Sec {s.section}</span>
                   {s.seats && <span className="ml-2 font-semibold">{s.seats}</span>}
                 </li>
               ))}
@@ -68,7 +68,7 @@ export function CourseCard({
         </div>
 
         <div className="flex flex-wrap md:flex-col items-center md:items-end justify-between gap-x-3 border-t md:border-0 border-slate-50 pt-3 md:pt-0 flex-shrink-0">
-          <span className="text-[11px] lg:text-xs font-semibold text-slate-400 tracking-wider uppercase">
+          <span className="text-[11px] lg:text-xs font-semibold text-slate-600 tracking-wider uppercase">
             {style.label}
           </span>
           {status === "ended" ? (
@@ -84,7 +84,7 @@ export function CourseCard({
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
                 <CircleCheck className="h-4 w-4" /> Completed · <span className="font-num">{formatClock(Date.parse(completedAt)).slice(0, 5)}</span>
               </span>
-              <button onClick={onToggleComplete} className="text-xs text-slate-400 underline hover:text-slate-700">
+              <button onClick={onToggleComplete} className="text-xs text-slate-600 underline hover:text-slate-700">
                 Undo
               </button>
             </div>

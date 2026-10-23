@@ -1,11 +1,11 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/server/auth";
 import { setCourseCompletion } from "@/lib/server/data-source";
 import { db } from "@/lib/server/db";
-import { slotCourses } from "@/lib/server/db/schema";
+import { examSlots, slotCourses } from "@/lib/server/db/schema";
 import { normalizeCues, normalizeTiming, saveAlertTiming, saveRulesCues } from "@/lib/server/settings";
 import { logUsage } from "@/lib/server/usage";
 
@@ -18,21 +18,39 @@ async function requireAdmin() {
 
 export type ActionState = { ok: boolean; message: string } | null;
 
-/** ข้อกำหนดเพิ่มเติมของรายวิชา → แสดงบนการ์ดรายวิชาในหน้าจอคุมสอบ */
+/**
+ * ข้อกำหนดเพิ่มเติมของรายวิชา → แสดงบนการ์ดรายวิชาในหน้าจอคุมสอบ
+ * applyToAll = ใช้กับทุกห้อง (ทุกรอบสอบ/กลุ่มเรียน) ของรายวิชานี้ในช่วงสอบเดียวกัน
+ */
 export async function saveCourseNote(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireAdmin();
   const id = Number(form.get("slotCourseId"));
   const note = String(form.get("note") ?? "").trim().slice(0, 300);
+  const applyToAll = form.get("applyToAll") === "on";
   if (!Number.isInteger(id)) return { ok: false, message: "Course not found" };
-  const [row] = await db
-    .update(slotCourses)
-    .set({ adminNote: note || null, updatedAt: new Date() })
-    .where(eq(slotCourses.id, id))
-    .returning({ courseCode: slotCourses.courseCode });
-  if (!row) return { ok: false, message: "Course not found" };
-  await logUsage("NOTE_UPDATED", { staffId: user.staff_id, meta: { slotCourseId: id, courseCode: row.courseCode } });
+
+  const [target] = await db
+    .select({ courseCode: slotCourses.courseCode, periodId: examSlots.periodId })
+    .from(slotCourses)
+    .innerJoin(examSlots, eq(examSlots.id, slotCourses.slotId))
+    .where(eq(slotCourses.id, id));
+  if (!target) return { ok: false, message: "Course not found" };
+
+  const where = applyToAll
+    ? and(
+        eq(slotCourses.courseCode, target.courseCode),
+        inArray(slotCourses.slotId, db.select({ id: examSlots.id }).from(examSlots).where(eq(examSlots.periodId, target.periodId))),
+      )
+    : eq(slotCourses.id, id);
+  const rows = await db.update(slotCourses).set({ adminNote: note || null, updatedAt: new Date() }).where(where).returning({ id: slotCourses.id });
+
+  await logUsage("NOTE_UPDATED", {
+    staffId: user.staff_id,
+    meta: { slotCourseId: id, courseCode: target.courseCode, applyToAll, updated: rows.length },
+  });
   revalidatePath("/admin", "layout");
-  return { ok: true, message: note ? "Saved" : "Note removed" };
+  const scope = applyToAll ? ` · all rooms of ${target.courseCode}` : "";
+  return { ok: true, message: (note ? "Saved" : "Note removed") + scope };
 }
 
 /** Admin ตั้ง/ยกเลิกสถานะ "สอบเสร็จ" แทนผู้คุมสอบ */

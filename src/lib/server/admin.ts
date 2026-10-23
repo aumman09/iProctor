@@ -9,6 +9,14 @@ import { courses, examPeriods, examSlots, proctorAssignments, roomLayouts, rooms
 
 const BKK = "Asia/Bangkok";
 export const bangkokToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: BKK }).format(new Date());
+/** รอบสอบ ณ ตอนนี้ (Asia/Bangkok): ก่อน 12:45 = เช้า — ใช้เป็นค่าเริ่มต้นของตัวกรอง */
+export function bangkokSessionNow(): SessionName {
+  const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: BKK, hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+    .format(new Date())
+    .split(":")
+    .map(Number);
+  return h * 60 + m < 12 * 60 + 45 ? "morning" : "afternoon";
+}
 /** เวลาเที่ยงคืน (Asia/Bangkok) ของวันที่ระบุ */
 const bkkMidnight = (date: string) => new Date(`${date}T00:00:00+07:00`);
 
@@ -193,6 +201,18 @@ export async function getExamOverview(f: {
         ),
     }))
     .filter((s) => s.courses.length > 0);
+}
+
+/** จำนวนห้อง (รอบสอบ) ของแต่ละรายวิชาในช่วงสอบ — ใช้กับ "Add Note ทุกห้องของรายวิชา" */
+export async function getCourseRoomCounts(period?: string): Promise<Record<string, number>> {
+  const rows = await db
+    .select({ courseCode: slotCourses.courseCode, rooms: countDistinct(slotCourses.slotId) })
+    .from(slotCourses)
+    .innerJoin(examSlots, eq(examSlots.id, slotCourses.slotId))
+    .innerJoin(examPeriods, eq(examPeriods.id, examSlots.periodId))
+    .where(period ? eq(examPeriods.label, period) : undefined)
+    .groupBy(slotCourses.courseCode);
+  return Object.fromEntries(rows.map((r) => [r.courseCode, r.rooms]));
 }
 
 /** ความคืบหน้าการส่งข้อสอบ (จากการกด "Mark as completed") ของช่วงสอบ */

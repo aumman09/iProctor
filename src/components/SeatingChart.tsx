@@ -98,7 +98,7 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
               : `min(100%, calc((100vh - 240px) * ${((w / h) * (1 + 2 * k)).toFixed(3)}))`,
           }}
         >
-          <div className={`mb-2 flex items-center justify-center gap-1.5 font-medium text-slate-500 ${text}`}>
+          <div className={`mb-2 flex items-center justify-center gap-1.5 font-medium text-slate-700 ${text}`}>
             <Projector className="w-4 h-4" /> Front of room (projector / whiteboard)
           </div>
 
@@ -136,7 +136,7 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
                 <span
                   key={s.id}
                   className={`absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-bold leading-none font-num ${
-                    off ? "text-slate-300 line-through" : LABEL_TEXT[g?.colorTheme ?? "white"]
+                    off ? "text-slate-500 line-through" : LABEL_TEXT[g?.colorTheme ?? "white"]
                   }`}
                   style={{ left: `${(s.x / w) * 100}%`, top: `${(s.y / h) * 100}%`, fontSize: `${labelCqw}cqw` }}
                   title={g?.courseName ? `${s.id} · ${g.courseName}` : s.id}
@@ -149,7 +149,7 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
             {layout.rowLabels?.map((r) => (
               <span
                 key={`${r.label}-${r.x}`}
-                className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-medium leading-none text-slate-400"
+                className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-medium leading-none text-slate-600"
                 style={{ left: `${(r.x / w) * 100}%`, top: `${(r.y / h) * 100}%`, fontSize: `${labelCqw}cqw` }}
               >
                 {r.label}
@@ -162,7 +162,7 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
                 style={DOOR_POS[d.wall](d.at)}
                 title="Door"
                 aria-label="Door"
-                className="absolute inline-flex items-center justify-center rounded-md border border-slate-300 bg-white p-1 text-slate-500 shadow-sm"
+                className="absolute inline-flex items-center justify-center rounded-md border border-slate-300 bg-white p-1 text-slate-700 shadow-sm"
               >
                 <DoorOpen className={large ? "w-5 h-5" : "w-4 h-4"} />
               </span>
@@ -187,12 +187,12 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
                   {Math.min(...nums)}–{g.key}
                   {Math.max(...nums)}
                 </span>
-                <span className="text-slate-400"> · {nums.length} seats</span>
+                <span className="text-slate-600"> · {nums.length} seats</span>
                 {g.courseName && <> · {g.courseName}</>}
                 {g.studentIdRange && (
                   <>
                     {" "}
-                    · <span className="text-slate-400">ID</span> <span className="font-num">{g.studentIdRange}</span>
+                    · <span className="text-slate-600">ID</span> <span className="font-num">{g.studentIdRange}</span>
                   </>
                 )}
               </span>
@@ -200,12 +200,12 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
           );
         })}
         {layout.chairs?.some((c) => !c.seat) && (
-          <li className="flex items-center gap-2 text-slate-400">
+          <li className="flex items-center gap-2 text-slate-600">
             <span className="h-3 w-3 flex-shrink-0 rounded border border-dashed border-slate-400" /> Empty chair (left vacant)
           </li>
         )}
         {layout.doors.length > 0 && (
-          <li className="flex items-center gap-2 text-slate-400">
+          <li className="flex items-center gap-2 text-slate-600">
             <DoorOpen className="h-3.5 w-3.5 flex-shrink-0" /> Door
           </li>
         )}

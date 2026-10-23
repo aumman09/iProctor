@@ -42,7 +42,7 @@ export function SeatingOverlay({ layout: base, onClose, autoMode, now, schedule,
   const title = (
     <div className="min-w-0">
       <h2 className="text-[clamp(1.25rem,3.6vh,1.875rem)] font-extrabold text-slate-950">Seating plan · {layout.roomId}</h2>
-      <p className="text-[clamp(0.8rem,2vh,1rem)] text-slate-500">Please take your assigned seat according to your seat number and sign colour.</p>
+      <p className="text-[clamp(0.8rem,2vh,1rem)] text-slate-700">Please take your assigned seat according to your seat number and sign colour.</p>
     </div>
   );
 
@@ -65,7 +65,7 @@ export function SeatingOverlay({ layout: base, onClose, autoMode, now, schedule,
             <div className="flex flex-shrink-0 items-center gap-4">
               <div className="text-right">
                 <p className="font-num text-[clamp(1.75rem,7vh,4rem)] font-extralight leading-none tracking-tight text-slate-950">{formatClock(now)}</p>
-                <p className="mt-1 text-xs font-medium text-slate-400">{PHASE_LABEL[phase].en}</p>
+                <p className="mt-1 text-xs font-medium text-slate-600">{PHASE_LABEL[phase].en}</p>
               </div>
               {closeButton}
             </div>

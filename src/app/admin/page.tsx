@@ -54,7 +54,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
             </>
           }
           progress={pct}
-          sub={`${Math.round(pct * 100)}% of this exam period`}
+          sub={`${Math.round(pct * 100)}% of This Exam Period`}
         />
         <StatTile
           icon={DoorOpen}
@@ -65,7 +65,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
               <span className="text-lg font-medium text-slate-400"> / {stats.slots}</span>
             </>
           }
-          sub={`${stats.rooms} exam rooms in use`}
+          sub={`${stats.rooms} ${stats.rooms === 1 ? "Exam Room" : "Exam Rooms"} in Use`}
         />
         <StatTile
           icon={MonitorPlay}
@@ -76,24 +76,24 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
               {stats.liveNow}
             </span>
           }
-          sub={`Exam screens opened today: ${usage.today.roomOpens} · seating views: ${usage.today.seatingViews}`}
+          sub={`Exam Screen Opened Today: ${usage.today.roomOpens} · Seating Views: ${usage.today.seatingViews}`}
         />
-        <StatTile icon={Users} label="Active Users (7 Days)" value={usage.activeUsers7d} sub={`Sign-ins today: ${usage.today.logins}`} />
+        <StatTile icon={Users} label="Active Users (7 Days)" value={usage.activeUsers7d} sub={`Sign In Today: ${usage.today.logins}`} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         <Card
           className="lg:col-span-3"
           title="Today's Exam Sessions"
-          sub="Status from “Mark as completed” on the exam screen"
+          sub="Status from “Mark as Completed” on the Exam Screen"
           action={
-            <Link href={`/admin/exams?date=${today}`} className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <Link href={`/admin/exams?date=${today}&session=`} className="text-sm font-medium text-slate-600 hover:text-slate-900">
               View All →
             </Link>
           }
         >
           {stats.todaySlots.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">No exam sessions today in this period</p>
+            <p className="py-8 text-center text-sm text-slate-400">No Exam Sessions Today in This Period</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {stats.todaySlots.map((s) => {
@@ -129,7 +129,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
         </Card>
 
         <div className="flex flex-col gap-6 lg:col-span-2">
-          <Card title="Daily Usage" sub="Sign-ins · portal · exam screens · seating plans (7 days)">
+          <Card title="Daily Usage" sub="Sign In · Portal · Exam Screen · Exam Seating (7 Days)">
             <DailyBars
               data={usage.daily.map((d) => ({
                 label: thaiDay(d.date, { weekday: "short" }),
@@ -139,7 +139,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
             />
           </Card>
 
-          <Card title="Recent Activity">
+          <Card title="Recent Activity" sub="Sign In / Sign Out">
             {activity.length === 0 ? (
               <p className="py-4 text-center text-sm text-slate-400">No activity yet</p>
             ) : (
@@ -164,7 +164,7 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
       </div>
 
       <p className="mt-6 flex items-center gap-1.5 text-xs text-slate-400">
-        <CalendarCheck className="h-3.5 w-3.5" /> A course counts as “submitted” when the proctor confirms it on the exam screen, or an admin marks it on the “Exam Schedule” page.
+        <CalendarCheck className="h-3.5 w-3.5" /> A course counts as “Submitted” when the proctor confirms it on the exam screen, or an admin marks it on the “Exam Schedule” page.
       </p>
     </>
   );

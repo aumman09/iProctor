@@ -14,11 +14,11 @@ import { SiteFooter } from "@/components/SiteFooter";
 // โทนกลาง (slate) ทั้งหน้า ใช้เขียว (emerald) เฉพาะสิ่งที่ "เปิดอยู่ตอนนี้" เท่านั้น
 const STATUS: Record<DutyStatus, { label: string; cls: string; dot: string }> = {
   UPCOMING: { label: "Upcoming", cls: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
-  LIVE: { label: "In session", cls: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500 animate-pulse" },
+  LIVE: { label: "In Session", cls: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500 animate-pulse" },
   COMPLETED: { label: "Completed", cls: "bg-slate-100 text-slate-400", dot: "bg-slate-300" },
 };
 
-const SESSION_LABEL = { morning: "Morning session", afternoon: "Afternoon session" } as const;
+const SESSION_LABEL = { morning: "Morning Session", afternoon: "Afternoon Session" } as const;
 
 const dateParts = (d: string) => {
   const date = new Date(`${d}T00:00:00Z`);
@@ -53,7 +53,7 @@ export default async function PortalPage(props: PageProps<"/portal">) {
               iProctor <span className="text-rose-600">MFU</span>
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              Proctor schedule · {user.name} ({user.role === "admin" ? "Admin" : "Proctor"})
+              Proctor Schedule · {user.name} ({user.role === "admin" ? "Admin" : "Proctor"})
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -69,7 +69,7 @@ export default async function PortalPage(props: PageProps<"/portal">) {
             <form action={logout}>
               <button className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900">
                 <LogOut className="w-4 h-4" />
-                Sign out
+                Sign Out
               </button>
             </form>
           </div>
@@ -77,7 +77,7 @@ export default async function PortalPage(props: PageProps<"/portal">) {
 
         <div className="mb-3 flex items-center justify-between gap-2">
           <p className="text-sm text-slate-500">
-            <span className="font-semibold text-slate-900">{duties.length}</span> proctoring duties
+            <span className="font-semibold text-slate-900">{duties.length}</span> {duties.length === 1 ? "Proctoring Duty" : "Proctoring Duties"}
           </p>
           <AddToCalendarButton count={upcoming.length + live.length} />
         </div>
@@ -104,7 +104,7 @@ export default async function PortalPage(props: PageProps<"/portal">) {
           <button className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200">Search</button>
         </form>
 
-        {duties.length === 0 && <p className="text-center text-slate-400 py-12">No proctoring duties found</p>}
+        {duties.length === 0 && <p className="text-center text-slate-400 py-12">No Proctoring Duties Found</p>}
 
         {live.length > 0 && (
           <Section title="Now">
@@ -184,7 +184,7 @@ function renderDuty(d: ProctorDuty) {
             >
               <span className={`h-2 w-2 rounded-full ${SEAT_THEME[c.seatColorTheme].dot}`} />
               {c.courseName}
-              {c.rowLabel && <span className="text-slate-400">· Seat {c.rowLabel}</span>}
+              {c.rowLabel && <span className="text-slate-400">· Row {c.rowLabel}</span>}
             </li>
           ))}
         </ul>
@@ -196,7 +196,7 @@ function renderDuty(d: ProctorDuty) {
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               <MonitorPlay className="w-4 h-4" />
-              Launch exam screen
+              Launch Exam Screen
             </Link>
           )}
           <Link
@@ -204,7 +204,7 @@ function renderDuty(d: ProctorDuty) {
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >
             <LayoutGrid className="w-4 h-4 text-slate-400" />
-            Seating plan
+            Seating
           </Link>
         </div>
       </div>

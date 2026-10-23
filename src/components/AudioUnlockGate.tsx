@@ -14,7 +14,7 @@ export function AudioUnlockGate({ roomCode, onUnlock }: { roomCode: string; onUn
           <Volume2 className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-bold text-slate-900">Ready to start · Room {roomCode}</h2>
-        <p className="text-slate-500 text-sm mt-2 leading-relaxed">
+        <p className="text-slate-700 text-sm mt-2 leading-relaxed">
           Click the button below to enable automatic announcements.
           <br />
           (Click once to enable automatic announcements)

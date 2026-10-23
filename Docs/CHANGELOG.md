@@ -2,6 +2,20 @@
 
 รูปแบบ: ใหม่สุดอยู่บนสุด · ทุกครั้งที่แก้ระบบให้เพิ่มรายการที่นี่ (ระบุไฟล์สำคัญที่เกี่ยวข้อง)
 
+## [Unreleased] — 2026-10-23 — ข้อความ Dashboard (Admin)
+### Changed
+- `src/app/admin/page.tsx`: ปรับข้อความ Dashboard เป็น Title Case ตามที่ผู้ใช้กำหนด — "100% of This Exam Period", "N Exam Room(s) in Use" (เอกพจน์/พหูพจน์ตามจำนวน), "Exam Screen Opened Today · Seating Views", "Sign In Today", "Status from “Mark as Completed” on the Exam Screen", "No Exam Sessions Today in This Period", "Sign In · Portal · Exam Screen · Exam Seating (7 Days)", “Submitted”; เพิ่มหัวข้อย่อย "Sign In / Sign Out" ใต้ Recent Activity (ยังไม่ได้บันทึกเหตุการณ์ Sign Out)
+- Exam Schedule (`src/app/admin/exams/page.tsx`): เปิดหน้าครั้งแรก/กด Clear = กรองวันนี้ + รอบสอบ ณ ตอนนี้ (ก่อน 12:45 = Morning; `bangkokSessionNow` ใน `src/lib/server/admin.ts`) — เลือก "All Sessions" หรือล้างวันที่แล้วกด Filter = ดูทั้งหมด; ลิงก์ View All จาก Dashboard ส่ง `session=` (ทุกรอบของวันนี้); หัวข้อย่อย "Exam Screen Status (Green = Active) · Course Submission and Extra Note · Refresh Every 30 Seconds"; นับ "N Session(s) · N Course(s)"
+- ไฟสถานะจอ (`ScreenLight` ใน `src/components/admin/ui.tsx`): "Proctoring Now / Screen Closed" → **Active / Inactive**, "opened" → "Open"
+- Add Note ของ Admin ใช้กับทุกห้องของรายวิชาในช่วงสอบเดียวกันได้ในครั้งเดียว: ช่องติ๊ก "Apply to All N Rooms…" (ติ๊กไว้เป็นค่าเริ่มต้น แสดงเมื่อรายวิชาสอบมากกว่า 1 ห้อง) — `saveCourseNote` ใน `src/app/admin/actions.ts`, `getCourseRoomCounts`, `CourseNoteForm`
+- Exam Rooms (`src/app/admin/rooms/page.tsx`): หัวข้อย่อย "131 Rooms · 11 Buildings — Use “Demo Screen” to Test the Exam Screen with a room's layout"; การ์ดห้องตัดทิศไวท์บอร์ดออก เหลือ "20 Seats · 1 Door · V1"; ป้ายกลุ่มที่นั่งไม่มีตัวอักษรนำ (เลขที่นั่งล้วน 1, 2, 3…) "Numbers" → **Normal** พร้อม tooltip อธิบาย
+- Settings (`src/components/admin/TimingForm.tsx`): หน่วย "min" → **Minute** (ช่องกรอก, คำอธิบาย, ปุ่ม Reset, "N Minute Left"); Timeline Preview เลือกความยาววิชา A/B ได้ 1–3 ชั่วโมง ทีละ 30 นาที (B เลือก None ได้; ค่าเริ่มต้น 3 ชม./2 ชม.) — คำเตือนที่ยาวกว่าวิชาไม่แสดง; เป็นแค่ตัวอย่าง ไม่บันทึก
+- Proctor Portal (`src/app/portal/page.tsx`, `src/components/AddToCalendarButton.tsx`): Title Case — "Proctor Schedule", "N Proctoring Duty/Duties", "Add to Calendar", "Morning/Afternoon Session", "In Session", "Sign Out", "Launch Exam Screen", "No Proctoring Duties Found"; ป้ายกลุ่มที่นั่งบนชิปรายวิชา "Seat A" → **Row A**; ปุ่ม "Seating plan" → **Seating**
+- หน้าระเบียบการสอบ (`src/components/InstructionSlides.tsx`): ป้าย "Reading aloud" → **Audio Playing** กระพริบ (จุดแดง ping + ป้ายจางเข้าออก) ตลอดที่เสียงเล่นอยู่
+- หน้าระเบียบการสอบ: ระหว่างเสียงอ่านข้อ 1–6 และคำเตือน แสดงข้อนั้น **เต็มจอ** (ตัวใหญ่ + จุดบอกความคืบหน้า 1–6, !) — `FocusedRule` ใน `InstructionSlides.tsx`; ช่วงหัวเรื่อง/อ่านจบ = หน้ารวม แล้วปิดกลับหน้าจอคุมสอบใน 2 วินาที (เหมือนเดิม); หน้ารวมไม่ทำให้ข้ออื่นจางแล้ว
+- จอโปรเจกเตอร์มองตัวสีเทาไม่เห็น (ทดสอบในห้องสอบจริง): ตัวอักษรสีเทาบนหน้าจอคุมสอบเข้มขึ้น (slate-300→500, 400→600, 500→700) ใน `CourseCard`, `OfficialClock`, `Header`, `SeatingChart`, `SeatingOverlay`, `AlertCenter`, `AudioUnlockGate`, `InstructionSlides` (ไทยใต้ข้อ → slate-700)
+- `next.config.ts`: `allowedDevOrigins` สำหรับ IP วง LAN (10.x / 172.x / 192.168.x) — เปิด `npm run dev` ผ่าน IP เครื่องแล้วหน้าห้องสอบไม่ค้างที่ "กำลังเริ่มระบบ…"
+
 ## [Unreleased] ? Deploy beta
 ### Added
 - Deploy ???? beta: https://iproctor.beta.mfu.ac.th (??????????? 192.168.11.90, `/opt/iproctor-beta`)

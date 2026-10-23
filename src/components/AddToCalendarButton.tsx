@@ -29,13 +29,13 @@ export function AddToCalendarButton({ count }: { count: number }) {
         className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
       >
         <CalendarPlus className="w-4 h-4 text-slate-500" />
-        Add to calendar
+        Add to Calendar
         <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
       </button>
 
       {open && (
         <div className="absolute right-0 z-20 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-          <p className="px-2 pb-2 pt-1 text-xs text-slate-500">Add {count} proctoring duties to your email calendar</p>
+          <p className="px-2 pb-2 pt-1 text-xs text-slate-500">Add {count} {count === 1 ? "proctoring duty" : "proctoring duties"} to your email calendar</p>
           {OPTIONS.map((o) => (
             <button
               key={o}

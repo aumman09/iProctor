@@ -30,12 +30,12 @@ export function Header({ roomCode, status }: { roomCode: string; status: Status 
               {s.label}
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 font-medium">Intelligent Exam Hall Controller</p>
+          <p className="text-[11px] text-slate-600 font-medium">Intelligent Exam Hall Controller</p>
         </div>
       </div>
 
       <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-slate-200/80 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04)] text-xs font-semibold">
-        <span className="text-slate-400 font-normal">Room</span>
+        <span className="text-slate-600 font-normal">Room</span>
         <span className="text-sm lg:text-lg font-bold text-slate-950">{roomCode}</span>
       </div>
     </header>

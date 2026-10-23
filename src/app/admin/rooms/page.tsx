@@ -4,8 +4,6 @@ import { PageHeader } from "@/components/admin/ui";
 import { SEAT_THEME } from "@/components/seat-theme";
 import { listRoomsWithLayouts } from "@/lib/server/admin";
 
-const FRONT: Record<string, string> = { TOP: "top", BOTTOM: "bottom", LEFT: "left", RIGHT: "right" };
-
 export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
   const sp = await props.searchParams;
   const q = (Array.isArray(sp.q) ? sp.q[0] : sp.q)?.trim().toUpperCase().replace(/[\s-]/g, "") ?? "";
@@ -18,7 +16,7 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
     <>
       <PageHeader
         title="Exam Rooms"
-        sub={`${all.length} rooms · ${buildings.length} buildings — layouts from the Registrar's PDFs · use “Demo Screen” to test the exam screen with a room's layout`}
+        sub={`${all.length} Rooms · ${buildings.length} Buildings — Use “Demo Screen” to Test the Exam Screen with a room's layout`}
       />
 
       <form method="get" className="mb-6 flex flex-wrap items-center gap-2">
@@ -53,14 +51,18 @@ export default async function AdminRooms(props: PageProps<"/admin/rooms">) {
                   {r.building} {r.roomNumber}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {r.capacity} seats · whiteboard {FRONT[r.layout.source?.front ?? "TOP"]} · {r.layout.doors.length} doors · v{r.version}
+                  {r.capacity} Seats · {r.layout.doors.length} {r.layout.doors.length === 1 ? "Door" : "Doors"} · V{r.version}
                 </p>
               </div>
               <div className="flex gap-1">
                 {r.layout.groups.map((g) => (
-                  <span key={g.key} className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-xs text-slate-600">
+                  <span
+                    key={g.key}
+                    title={g.key ? `Seats numbered ${g.key}1, ${g.key}2, …` : "Plain seat numbers 1, 2, 3, … (no letter prefix)"}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-xs text-slate-600"
+                  >
                     <span className={`h-2 w-2 rounded-full ${SEAT_THEME[g.colorTheme].dot}`} />
-                    {g.key || "Numbers"}
+                    {g.key || "Normal"}
                   </span>
                 ))}
               </div>

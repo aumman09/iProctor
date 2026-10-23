@@ -5,7 +5,7 @@ import { CourseNoteForm } from "@/components/admin/CourseNoteForm";
 import { AutoRefresh } from "@/components/admin/AutoRefresh";
 import { Card, PageHeader, ScreenLight, StatusChip } from "@/components/admin/ui";
 import { SEAT_THEME } from "@/components/seat-theme";
-import { getExamOverview } from "@/lib/server/admin";
+import { bangkokSessionNow, bangkokToday, getCourseRoomCounts, getExamOverview } from "@/lib/server/admin";
 import { getExamPeriods } from "@/lib/server/data-source";
 import type { SessionName } from "@/lib/types";
 
@@ -19,12 +19,14 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || undefined;
   const periods = await getExamPeriods();
   const period = periods.labels.find((p) => p === one(sp.period)) ?? periods.current;
-  const date = one(sp.date)?.match(/^\d{4}-\d{2}-\d{2}$/) ? one(sp.date) : undefined;
-  const session = one(sp.session) === "morning" || one(sp.session) === "afternoon" ? (one(sp.session) as SessionName) : undefined;
+  // ไม่มีพารามิเตอร์ (เปิดหน้าครั้งแรก / Clear) = วันนี้ + รอบสอบ ณ ตอนนี้; ส่งค่าว่าง = ทุกวัน / ทุกรอบ
+  const date = sp.date === undefined ? bangkokToday() : one(sp.date)?.match(/^\d{4}-\d{2}-\d{2}$/) ? one(sp.date) : undefined;
+  const sessionParam = sp.session === undefined ? bangkokSessionNow() : one(sp.session);
+  const session = sessionParam === "morning" || sessionParam === "afternoon" ? (sessionParam as SessionName) : undefined;
   const status = one(sp.status) === "done" || one(sp.status) === "pending" ? (one(sp.status) as "done" | "pending") : undefined;
   const q = one(sp.q);
 
-  const slots = await getExamOverview({ period, date, session, status, q });
+  const [slots, roomCounts] = await Promise.all([getExamOverview({ period, date, session, status, q }), getCourseRoomCounts(period)]);
   const courseCount = slots.reduce((n, s) => n + s.courses.length, 0);
   const field = "rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm";
 
@@ -33,7 +35,7 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
       <AutoRefresh />
       <PageHeader
         title="Exam Schedule"
-        sub="Exam screen status (green = proctoring now), course submission and extra course notes — refreshes every 30 seconds"
+        sub="Exam Screen Status (Green = Active) · Course Submission and Extra Note · Refresh Every 30 Seconds"
       />
 
       <form method="get" className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3">
@@ -64,7 +66,7 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
       </form>
 
       <p className="mb-3 text-sm text-slate-500">
-        {slots.length} sessions · {courseCount} courses
+        {slots.length} {slots.length === 1 ? "Session" : "Sessions"} · {courseCount} {courseCount === 1 ? "Course" : "Courses"}
       </p>
 
       {slots.length === 0 ? (
@@ -129,7 +131,7 @@ export default async function AdminExams(props: PageProps<"/admin/exams">) {
                         </div>
                       </div>
 
-                      <CourseNoteForm slotCourseId={c.id} note={c.adminNote} />
+                      <CourseNoteForm slotCourseId={c.id} note={c.adminNote} courseCode={c.courseCode} roomCount={roomCounts[c.courseCode] ?? 1} />
 
                       <form action={setCompletionByAdmin} className="flex items-center gap-2 lg:justify-end">
                         <input type="hidden" name="slotCourseId" value={c.id} />

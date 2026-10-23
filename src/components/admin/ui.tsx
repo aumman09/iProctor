@@ -133,8 +133,8 @@ export function ScreenLight({
         {live && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />}
         <span className={`relative inline-flex h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-400"}`} />
       </span>
-      {live ? "Proctoring Now" : "Screen Closed"}
-      {!compact && <span className="font-num font-normal opacity-80">· opened {hm(screen.openedAt)}</span>}
+      {live ? "Active" : "Inactive"}
+      {!compact && <span className="font-num font-normal opacity-80">· Open {hm(screen.openedAt)}</span>}
     </span>
   );
 }

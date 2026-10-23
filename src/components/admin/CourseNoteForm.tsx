@@ -4,8 +4,21 @@ import { useActionState, useState } from "react";
 import { MessageSquarePlus, Pencil } from "lucide-react";
 import { saveCourseNote, type ActionState } from "@/app/admin/actions";
 
-/** แก้ "ข้อกำหนดเพิ่มเติม" ของรายวิชา → แสดงบนการ์ดรายวิชาในหน้าจอคุมสอบ */
-export function CourseNoteForm({ slotCourseId, note }: { slotCourseId: number; note: string | null }) {
+/**
+ * แก้ "ข้อกำหนดเพิ่มเติม" ของรายวิชา → แสดงบนการ์ดรายวิชาในหน้าจอคุมสอบ
+ * roomCount > 1 = รายวิชานี้สอบหลายห้อง → เลือกบันทึกให้ทุกห้องในครั้งเดียวได้ (ค่าเริ่มต้น: ทุกห้อง)
+ */
+export function CourseNoteForm({
+  slotCourseId,
+  note,
+  courseCode,
+  roomCount,
+}: {
+  slotCourseId: number;
+  note: string | null;
+  courseCode: string;
+  roomCount: number;
+}) {
   const [editing, setEditing] = useState(false);
   const [state, action, pending] = useActionState<ActionState, FormData>(async (prev, form) => {
     const r = await saveCourseNote(prev, form);
@@ -15,20 +28,22 @@ export function CourseNoteForm({ slotCourseId, note }: { slotCourseId: number; n
 
   if (!editing)
     return (
-      <div className="flex min-w-0 items-start gap-2">
-        {note ? (
-          <p className="min-w-0 flex-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-sm text-amber-900">{note}</p>
-        ) : (
-          <span className="flex-1 text-sm text-slate-400">—</span>
-        )}
-        <button
-          onClick={() => setEditing(true)}
-          className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-        >
-          {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
-          {note ? "Edit" : "Add Note"}
-        </button>
-        {state?.ok && <span className="text-xs text-emerald-600">{state.message}</span>}
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-start gap-2">
+          {note ? (
+            <p className="min-w-0 flex-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-sm text-amber-900">{note}</p>
+          ) : (
+            <span className="flex-1 text-sm text-slate-400">—</span>
+          )}
+          <button
+            onClick={() => setEditing(true)}
+            className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          >
+            {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
+            {note ? "Edit" : "Add Note"}
+          </button>
+        </div>
+        {state?.ok && <p className="mt-1 text-xs text-emerald-600">{state.message}</p>}
       </div>
     );
 
@@ -44,6 +59,12 @@ export function CourseNoteForm({ slotCourseId, note }: { slotCourseId: number; n
         placeholder="e.g. Calculators are permitted. / Open book (1 A4 page)"
         className="w-full resize-none rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-amber-300 focus:outline-none focus:ring-4 focus:ring-amber-100"
       />
+      {roomCount > 1 && (
+        <label className="flex items-center gap-2 text-xs text-slate-600">
+          <input type="checkbox" name="applyToAll" defaultChecked className="h-3.5 w-3.5 accent-slate-900" />
+          Apply to All {roomCount} Rooms of {courseCode} in This Exam Period
+        </label>
+      )}
       <div className="flex items-center gap-2">
         <button disabled={pending} className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
           {pending ? "Saving…" : "Save"}

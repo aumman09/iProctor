@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   // สำหรับ Docker image ขนาดเล็ก (รันด้วย node server.js)
   output: "standalone",
+  // ให้เปิดหน้า dev ผ่าน IP ในวง LAN ได้ (เช่น เครื่องฉายเปิด http://172.25.x.x:3000)
+  // ไม่ระบุ = Next.js บล็อกไฟล์ JS ของ dev → หน้าห้องสอบค้างที่ "กำลังเริ่มระบบ…" (มีผลเฉพาะ npm run dev)
+  allowedDevOrigins: ["10.*.*.*", "172.*.*.*", "192.168.*.*"],
 };
 
 export default nextConfig;

@@ -61,7 +61,7 @@ function Modal({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string) => 
       <div className="bg-white rounded-3xl p-8 lg:p-12 max-w-2xl w-full text-center shadow-2xl border border-slate-100 animate-[pop_200ms_ease-out]">
         <AlertIcon kind={alert.kind} large />
         <h3 className="text-2xl lg:text-4xl font-bold text-slate-900 mb-3">{alert.title}</h3>
-        <p className="text-slate-500 text-base lg:text-xl leading-relaxed mb-8">{alert.description}</p>
+        <p className="text-slate-700 text-base lg:text-xl leading-relaxed mb-8">{alert.description}</p>
         <button
           onClick={() => onDismiss(alert.id)}
           className="w-full py-3 bg-slate-950 hover:bg-slate-800 text-white font-medium rounded-xl text-sm transition shadow-sm"
@@ -98,7 +98,7 @@ function Toast({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string) => 
       <AlertIcon kind={alert.kind} />
       <div>
         <p className="font-semibold text-slate-900">{alert.title}</p>
-        <p className="text-sm text-slate-500 leading-relaxed">{alert.description}</p>
+        <p className="text-sm text-slate-700 leading-relaxed">{alert.description}</p>
       </div>
     </button>
   );

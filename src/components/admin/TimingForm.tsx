@@ -11,41 +11,51 @@ const at = (base: string, deltaMin: number) => {
   return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 };
 
-/** ตั้งเวลาแจ้งเตือน + ตัวอย่างไทม์ไลน์ของรอบบ่าย (13:30–16:30 วิชา 3 ชม. และ 13:30–15:30 วิชา 2 ชม.) */
+/** ความยาววิชาที่เลือกดูใน Preview ได้: 1–3 ชั่วโมง ทีละ 30 นาที */
+const DURATIONS = [60, 90, 120, 150, 180];
+const hours = (m: number) => (m === 60 ? "1 Hour" : `${m / 60} Hours`);
+
+/** ตั้งเวลาแจ้งเตือน + ตัวอย่างไทม์ไลน์ของรอบบ่าย 13:30 (วิชา A/B เลือกความยาวได้ ค่าเริ่มต้น 3 ชม. กับ 2 ชม.) */
 export function TimingForm({ initial }: { initial: AlertTiming }) {
   const [roomOpen, setRoomOpen] = useState(initial.roomOpenBeforeMin);
   const [departure, setDeparture] = useState(initial.departureAfterMin);
   const [warnings, setWarnings] = useState<number[]>(initial.warningsBeforeEndMin);
+  const [courseA, setCourseA] = useState(180);
+  const [courseB, setCourseB] = useState(120); // 0 = ไม่มีวิชาที่ 2
   const [state, action, pending] = useActionState<ActionState, FormData>(saveTimingSettings, null);
 
   const valid = (n: number, min: number, max: number) => Number.isInteger(n) && n >= min && n <= max;
   const sorted = [...new Set(warnings.filter((w) => valid(w, 1, 120)))].sort((a, b) => b - a);
+  const courses = [
+    { key: "A", min: courseA },
+    { key: "B", min: courseB },
+  ].filter((c) => c.min > 0);
   const preview = [
     { time: at("13:30", -roomOpen), label: "Room Open · Seating Plan · Welcome Audio" },
     { time: "13:30", label: "Exam Start · Exam Rules" },
     { time: at("13:30", departure), label: "Leaving Allowed (Chime)" },
-    ...sorted.flatMap((w) => [
-      { time: at("15:30", -w), label: `${w} Min Left — 2-Hour Course` },
-      { time: at("16:30", -w), label: `${w} Min Left — 3-Hour Course` },
+    ...courses.flatMap((c) => [
+      // เตือนที่ยาวกว่าวิชา = ก่อนเริ่มสอบ → ไม่แสดง
+      ...sorted.filter((w) => w < c.min).map((w) => ({ time: at("13:30", c.min - w), label: `${w} Minute Left — Course ${c.key} (${hours(c.min)})` })),
+      { time: at("13:30", c.min), label: `Time Up — Course ${c.key} (${hours(c.min)})` },
     ]),
-    { time: "15:30", label: "Time Up — 2-Hour Course" },
-    { time: "16:30", label: "Time Up — 3-Hour Course" },
   ].sort((a, b) => a.time.localeCompare(b.time));
+  const select = "rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700";
 
   const num = "w-24 rounded-xl border border-slate-200 px-3 py-2 text-right font-num text-sm focus:border-slate-400 focus:outline-none";
 
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <form action={action} className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-3">
-        <Row label="Open Room Before Start" hint="Full-screen seating plan + welcome audio (0–120 min)">
+        <Row label="Open Room Before Start" hint="Full-screen seating plan + welcome audio (0–120 Minute)">
           <input name="roomOpenBeforeMin" type="number" min={0} max={120} value={roomOpen} onChange={(e) => setRoomOpen(Number(e.target.value))} className={num} />
-          <span className="text-sm text-slate-500">min</span>
+          <span className="text-sm text-slate-500">Minute</span>
         </Row>
-        <Row label="Allow Leaving After Start" hint="Popup + chime (0–240 min)">
+        <Row label="Allow Leaving After Start" hint="Popup + chime (0–240 Minute)">
           <input name="departureAfterMin" type="number" min={0} max={240} value={departure} onChange={(e) => setDeparture(Number(e.target.value))} className={num} />
-          <span className="text-sm text-slate-500">min</span>
+          <span className="text-sm text-slate-500">Minute</span>
         </Row>
-        <Row label="Warn Before a Course Ends" hint="Up to 5 warnings (1–120 min) · one chime each">
+        <Row label="Warn Before a Course Ends" hint="Up to 5 warnings (1–120 Minute) · one chime each">
           <div className="flex flex-wrap items-center gap-2">
             {warnings.map((w, i) => (
               <span key={i} className="inline-flex items-center gap-1 rounded-xl border border-slate-200 py-1 pl-2 pr-1">
@@ -59,7 +69,7 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
                   className="w-14 bg-transparent text-right font-num text-sm focus:outline-none"
                   aria-label={`Warning ${i + 1} (minutes)`}
                 />
-                <span className="text-xs text-slate-400">min</span>
+                <span className="text-xs text-slate-400">Minute</span>
                 <button
                   type="button"
                   onClick={() => setWarnings((ws) => ws.filter((_, j) => j !== i))}
@@ -96,7 +106,7 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
             }}
             className="rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-100"
           >
-            Reset to Defaults (15 / 45 / 10)
+            Reset to Defaults (15 / 45 / 10 Minute)
           </button>
           {state && <span className={`text-sm ${state.ok ? "text-emerald-600" : "text-rose-600"}`}>{state.message}</span>}
         </div>
@@ -104,7 +114,30 @@ export function TimingForm({ initial }: { initial: AlertTiming }) {
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-2">
         <h2 className="font-semibold text-slate-900">Timeline Preview</h2>
-        <p className="mt-0.5 text-xs text-slate-500">Afternoon session 13:30 · a 3-hour and a 2-hour course in one room</p>
+        <p className="mt-0.5 text-xs text-slate-500">Afternoon session 13:30 · course length 1–3 hours in 30-minute steps</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <label className="inline-flex items-center gap-1.5">
+            Course A
+            <select value={courseA} onChange={(e) => setCourseA(Number(e.target.value))} className={select}>
+              {DURATIONS.map((d) => (
+                <option key={d} value={d}>
+                  {hours(d)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="inline-flex items-center gap-1.5">
+            Course B
+            <select value={courseB} onChange={(e) => setCourseB(Number(e.target.value))} className={select}>
+              <option value={0}>None</option>
+              {DURATIONS.map((d) => (
+                <option key={d} value={d}>
+                  {hours(d)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <ol className="mt-4 space-y-0">
           {preview.map((p, i) => (
             <li key={i} className="relative flex gap-3 pb-4 pl-5 last:pb-0">
