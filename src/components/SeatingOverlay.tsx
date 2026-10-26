@@ -41,7 +41,7 @@ export function SeatingOverlay({ layout: base, onClose, autoMode, now, schedule,
   );
   const title = (
     <div className="min-w-0">
-      <h2 className="text-[clamp(1.25rem,3.6vh,1.875rem)] font-extrabold text-slate-950">Seating plan · {layout.roomId}</h2>
+      <h2 className="text-[clamp(1.25rem,3.6vh,1.875rem)] font-extrabold text-slate-950">Seating · {layout.roomId}</h2>
       <p className="text-[clamp(0.8rem,2vh,1rem)] text-slate-700">Please take your assigned seat according to your seat number and sign colour.</p>
     </div>
   );

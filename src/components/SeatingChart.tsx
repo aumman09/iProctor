@@ -99,7 +99,7 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
           }}
         >
           <div className={`mb-2 flex items-center justify-center gap-1.5 font-medium text-slate-700 ${text}`}>
-            <Projector className="w-4 h-4" /> Front of room (projector / whiteboard)
+            <Projector className="w-4 h-4" /> Front of Room (projector / whiteboard)
           </div>
 
           <div
@@ -124,7 +124,7 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
                     !c.seat || off ? "border-dashed border-slate-300" : CHAIR_FILL[g?.colorTheme ?? "white"]
                   }`}
                   style={pos(c)}
-                  title={c.seat ? (off ? `${c.seat} · not in use` : c.seat) : "Empty chair"}
+                  title={c.seat ? (off ? `${c.seat} · not in use` : c.seat) : "Do Not Seat"}
                 />
               );
             })}
@@ -183,7 +183,7 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
               <span className={`mt-1 h-3 w-3 flex-shrink-0 rounded ${SEAT_THEME[g.colorTheme].dot}`} />
               <span>
                 <span className="font-semibold text-slate-900 font-num">
-                  {g.key}
+                  Seat {g.key}
                   {Math.min(...nums)}–{g.key}
                   {Math.max(...nums)}
                 </span>
@@ -201,7 +201,7 @@ export function SeatingChart({ layout, large = false }: { layout: RoomLayoutResp
         })}
         {layout.chairs?.some((c) => !c.seat) && (
           <li className="flex items-center gap-2 text-slate-600">
-            <span className="h-3 w-3 flex-shrink-0 rounded border border-dashed border-slate-400" /> Empty chair (left vacant)
+            <span className="h-3 w-3 flex-shrink-0 rounded border border-dashed border-slate-400" /> Do Not Seat
           </li>
         )}
         {layout.doors.length > 0 && (

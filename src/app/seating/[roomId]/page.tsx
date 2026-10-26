@@ -19,7 +19,7 @@ export default async function SeatingPage(props: PageProps<"/seating/[roomId]">)
           <BackButton />
         </div>
         <h1 className="text-lg font-bold text-slate-950 mb-4">
-          Seating plan <span className="text-rose-600">{layout.roomId}</span>
+          Seating <span className="text-rose-600">{layout.roomId}</span>
         </h1>
         <SeatingChart layout={layout} />
       </main>
