@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0}</style>
+<title>iProctor MFU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: แผ่นอินโฟกราฟิกแนวตั้ง — นาฬิกาห้องสอบเป็น hero, ตามด้วยข้อมูลเข้า → ระบบ → ผู้ใช้ 3 กลุ่ม, ไทม์ไลน์รอบสอบ, ฟังก์ชัน, สถานะ */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #5b6577;
+  --line: #e2e6ec;
+  --brand: #e11d48;
+  --live: #059669;
+  --live-soft: #e7f6f0;
+  --brand-soft: #fdecef;
+  --amber: #b45309;
+  --amber-soft: #fdf3e2;
+  --f-display: "Plus Jakarta Sans", "Noto Sans Thai", system-ui, sans-serif;
+  --f-body: "Noto Sans Thai", "Plus Jakarta Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1018; --surface: #141a25; --ink: #eef1f6; --muted: #9aa4b5; --line: #263042;
+    --brand: #fb7185; --live: #34d399; --live-soft: #0f2a22; --brand-soft: #2c1219; --amber: #fbbf24; --amber-soft: #2a2011;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1018; --surface: #141a25; --ink: #eef1f6; --muted: #9aa4b5; --line: #263042;
+  --brand: #fb7185; --live: #34d399; --live-soft: #0f2a22; --brand-soft: #2c1219; --amber: #fbbf24; --amber-soft: #2a2011;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 56px; display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h2 { font-size: clamp(1.35rem, 2.6vw, 1.75rem); font-weight: 800; }
+p { margin: 0; }
+.eyebrow { font-family: var(--f-display); font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.num { font-family: var(--f-display); font-variant-numeric: tabular-nums; }
+section { display: grid; gap: 20px; }
+.lede { color: var(--muted); max-width: 62ch; }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: 32px; align-items: center; }
+.hero h1 { font-size: clamp(2.2rem, 5.5vw, 3.6rem); font-weight: 800; letter-spacing: -.02em; }
+.hero h1 span { color: var(--brand); }
+.hero .tag { font-size: clamp(1.05rem, 2vw, 1.3rem); font-weight: 600; margin-top: 6px; }
+.hero .lede { margin-top: 14px; }
+.clock { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 26px 24px; text-align: center; display: grid; gap: 8px; }
+.clock .time { font-weight: 300; font-size: clamp(3rem, 8vw, 4.6rem); letter-spacing: -.03em; line-height: 1; }
+.clock .phase { justify-self: center; background: var(--bg); border-radius: 999px; padding: 4px 14px; font-size: 13px; color: var(--muted); font-family: var(--f-display); }
+.mini { display: grid; gap: 8px; margin-top: 8px; text-align: left; }
+.mini div { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 13px; }
+.seat { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 13px; flex: none; }
+.seat.a { background: var(--brand-soft); color: var(--brand); }
+.seat.b { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+.mini .rem { margin-left: auto; font-family: var(--f-display); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.stat b { display: block; font-family: var(--f-display); font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 13px; }
+
+/* Flow */
+.flow { display: grid; grid-template-columns: 1fr auto 1.1fr auto 1.3fr; gap: 14px; align-items: stretch; }
+.col { display: grid; gap: 10px; align-content: start; }
+.col > .label { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-family: var(--f-display); }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.box h3 { font-size: 15px; font-weight: 700; }
+.box p { color: var(--muted); font-size: 13px; }
+.box.core { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.box.core p { color: color-mix(in srgb, var(--bg) 72%, transparent); }
+.arrow { display: grid; place-items: center; color: var(--muted); font-size: 22px; font-family: var(--f-display); }
+.who { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
+.who .ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--bg); }
+.who .ic svg { width: 18px; height: 18px; stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Timeline */
+.timeline { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.timeline::before { content: ""; position: absolute; left: 4%; right: 4%; top: 15px; height: 2px; background: var(--line); }
+.step { position: relative; display: grid; gap: 8px; align-content: start; }
+.dot { width: 32px; height: 32px; border-radius: 999px; background: var(--surface); border: 2px solid var(--ink); display: grid; place-items: center; font-family: var(--f-display); font-size: 11px; font-weight: 800; position: relative; z-index: 1; }
+.step.end .dot { border-color: var(--brand); color: var(--brand); }
+.step.done .dot { border-color: var(--live); color: var(--live); }
+.step .t { font-family: var(--f-display); font-weight: 800; font-variant-numeric: tabular-nums; }
+.step h3 { font-size: 14px; font-weight: 700; }
+.step p { font-size: 13px; color: var(--muted); }
+
+/* Features */
+.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 12px; align-content: start; }
+.panel header { display: grid; gap: 2px; }
+.panel header h3 { font-size: 17px; font-weight: 800; }
+.panel header p { color: var(--muted); font-size: 13px; }
+.panel ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.panel li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; font-size: 14px; }
+.panel li::before { content: ""; width: 8px; height: 8px; border-radius: 99px; background: var(--ink); margin-top: 8px; margin-left: 4px; }
+.panel.screen li::before { background: var(--brand); }
+.panel.admin li::before { background: var(--live); }
+.panel li small { display: block; color: var(--muted); font-size: 12.5px; }
+
+/* Status */
+.status { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+.state { border-radius: 18px; padding: 18px; display: grid; gap: 10px; align-content: start; border: 1px solid var(--line); background: var(--surface); }
+.state.ok { border-color: color-mix(in srgb, var(--live) 40%, var(--line)); }
+.state.todo { border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); background: var(--amber-soft); }
+.chip { justify-self: start; font-family: var(--f-display); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+.ok .chip { background: var(--live-soft); color: var(--live); }
+.todo .chip { background: var(--surface); color: var(--amber); }
+.state ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+.link { font-family: var(--f-display); font-weight: 700; color: var(--brand); text-decoration: none; word-break: break-all; }
+.link:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 4px; }
+footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+
+@media (max-width: 860px) {
+  .hero, .status { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .flow { grid-template-columns: 1fr; }
+  .arrow { transform: rotate(90deg); height: 20px; }
+  .features { grid-template-columns: 1fr; }
+  .timeline { grid-template-columns: 1fr; gap: 14px; }
+  .timeline::before { left: 15px; right: auto; top: 6px; bottom: 6px; width: 2px; height: auto; }
+  .step { grid-template-columns: 32px 1fr; column-gap: 12px; }
+  .step .dot { grid-row: span 3; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+}
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 99px; background: var(--live); margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+
+  <!-- Hero -->
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Mae Fah Luang University · Exam Proctor Assistant</p>
+      <h1>iProctor <span>MFU</span></h1>
+      <p class="tag">ระบบช่วยคุมสอบกลางภาคและปลายภาค</p>
+      <p class="lede">เปลี่ยนจอโปรเจกเตอร์ในห้องสอบให้เป็นผู้ช่วยกรรมการ: นาฬิกามาตรฐานของมหาวิทยาลัย นับถอยหลังแยกรายวิชา ประกาศเสียงอัตโนมัติ และผังที่นั่งตามสำนักทะเบียน พร้อมให้ฝ่ายจัดสอบติดตามทุกห้องได้แบบเรียลไทม์</p>
+    </div>
+    <div class="clock" aria-label="ตัวอย่างหน้าจอคุมสอบ">
+      <p class="eyebrow">MFU Official Standard Time</p>
+      <p class="time num">14:20:08</p>
+      <p class="phase">Afternoon Session · 13:30 – 16:30 · Exam in Progress</p>
+      <div class="mini">
+        <div><span class="seat a">A</span><span><b>1302301</b> · Seats A1 – A80</span><span class="rem">02:09:52</span></div>
+        <div><span class="seat b">B</span><span><b>1501402</b> · Seats B1 – B80</span><span class="rem">01:09:52</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Scale -->
+  <section aria-label="ขนาดของระบบ">
+    <div class="stats">
+      <div class="stat"><b>131</b><span>ห้องสอบ ใน 10 อาคาร มีผังที่นั่งในระบบแล้ว</span></div>
+      <div class="stat"><b>~1,500</b><span>รายวิชาต่อภาคการศึกษา</span></div>
+      <div class="stat"><b>~1,000</b><span>อาจารย์และพนักงานผู้คุมสอบ</span></div>
+      <div class="stat"><b>2</b><span>ช่วงสอบต่อภาค: กลางภาค และปลายภาค</span></div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section>
+    <div>
+      <p class="eyebrow">ระบบทำงานอย่างไร</p>
+      <h2>ข้อมูลกลางของมหาวิทยาลัย → iProctor → ผู้ใช้ 3 กลุ่ม</h2>
+    </div>
+    <div class="flow">
+      <div class="col">
+        <p class="label">แหล่งข้อมูล</p>
+        <div class="box"><h3>Blendata (Data Hub)</h3><p>ตารางสอบ ห้อง รายวิชา กลุ่มที่นั่ง A/B และผู้คุมสอบ ดึงอัตโนมัติทุกช่วงสอบ</p></div>
+        <div class="box"><h3>สำนักทะเบียน</h3><p>ผังที่นั่งสอบ (PDF) แปลงเป็นผังในระบบอัตโนมัติ ครบทุกห้อง</p></div>
+        <div class="box"><h3>MFU SSO</h3><p>เข้าสู่ระบบด้วยบัญชีมหาวิทยาลัย</p></div>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="col">
+        <p class="label">ระบบ</p>
+        <div class="box core"><h3>iProctor MFU</h3><p>ฐานข้อมูลกลางของรอบสอบ ผังห้อง สถานะการส่งข้อสอบ และการตั้งค่า เก็บประวัติแยกตามภาคการศึกษา</p></div>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="col">
+        <p class="label">ผู้ใช้งาน</p>
+        <div class="box who">
+          <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+          <div><h3>อาจารย์ / พนักงานผู้คุมสอบ</h3><p>ดูเวรของตนเอง กดเปิดหน้าจอคุมสอบ ยืนยันส่งข้อสอบ</p></div>
+        </div>
+        <div class="box who">
+          <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+          <div><h3>นักศึกษาในห้องสอบ</h3><p>เห็นเวลา ระเบียบการสอบ ผังที่นั่ง และประกาศบนจอโปรเจกเตอร์</p></div>
+        </div>
+        <div class="box who">
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+          <div><h3>ฝ่ายจัดสอบ (Admin)</h3><p>ติดตามทุกห้องแบบเรียลไทม์ ตั้งค่า และเพิ่มข้อกำหนดรายวิชา</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section>
+    <div>
+      <p class="eyebrow">หนึ่งรอบสอบบนจอโปรเจกเตอร์</p>
+      <h2>ระบบทำงานเองตามเวลา กรรมการไม่ต้องกดอะไรระหว่างสอบ</h2>
+      <p class="lede" style="margin-top:8px">ตัวอย่างรอบบ่าย 13:30 ห้องที่สอบ 2 วิชาพร้อมกัน (วิชา 3 ชั่วโมง และ 2 ชั่วโมง) — เวลาแจ้งเตือนทุกจุดปรับได้จากหน้า Admin</p>
+    </div>
+    <ol class="timeline" style="list-style:none;margin:0;padding:0">
+      <li class="step"><span class="dot">1</span><span class="t">13:15</span><h3>เปิดห้องสอบ</h3><p>ผังที่นั่งเต็มจอ + เสียงต้อนรับ นักศึกษาหาที่นั่งตามเลขและสีป้าย</p></li>
+      <li class="step"><span class="dot">2</span><span class="t">13:30</span><h3>เริ่มสอบ</h3><p>อ่านระเบียบการสอบด้วยเสียง จอไฮไลต์ข้อที่กำลังอ่าน (ไทย/อังกฤษ)</p></li>
+      <li class="step"><span class="dot">3</span><span class="t">14:15</span><h3>ครบ 45 นาที</h3><p>กระดิ่ง + แจ้งว่าผู้ที่ทำเสร็จออกจากห้องได้</p></li>
+      <li class="step"><span class="dot">4</span><span class="t">15:20</span><h3>เหลือ 10 นาที</h3><p>เตือนเฉพาะวิชาที่ใกล้หมดเวลา</p></li>
+      <li class="step end"><span class="dot">5</span><span class="t">15:30</span><h3>หมดเวลา</h3><p>“Time is up” เฉพาะกลุ่มที่นั่ง B อีกกลุ่มสอบต่อได้</p></li>
+      <li class="step done"><span class="dot">✓</span><span class="t">หลังสอบ</span><h3>ยืนยันส่งข้อสอบ</h3><p>กรรมการกด “Mark as completed” ฝ่ายจัดสอบเห็นทันที</p></li>
+    </ol>
+  </section>
+
+  <!-- Features -->
+  <section>
+    <div>
+      <p class="eyebrow">ฟังก์ชันหลัก</p>
+      <h2>แยกตามผู้ใช้งาน</h2>
+    </div>
+    <div class="features">
+      <article class="panel screen">
+        <header><h3>หน้าจอคุมสอบ</h3><p>ฉายบนโปรเจกเตอร์ในห้องสอบ (รองรับจอ 4:3 และ 16:9)</p></header>
+        <ul>
+          <li><span>นาฬิกามาตรฐานของมหาวิทยาลัย<small>ซิงก์เวลากับเซิร์ฟเวอร์ ทุกห้องเวลาตรงกัน</small></span></li>
+          <li><span>นับถอยหลังแยกรายวิชา<small>วิชา 2 และ 3 ชั่วโมงในห้องเดียวกันจบแยกกันถูกต้อง</small></span></li>
+          <li><span>เสียงประกาศและแจ้งเตือนอัตโนมัติ</span></li>
+          <li><span>ผังที่นั่งตามผังจริงของสำนักทะเบียน<small>สีป้ายชมพู/ขาว ตำแหน่งโต๊ะ เก้าอี้ และประตู</small></span></li>
+          <li><span>ประกาศจากกรรมการขึ้นจอได้ทันที<small>เช่น แจ้งข้อสอบพิมพ์ผิด</small></span></li>
+        </ul>
+      </article>
+      <article class="panel">
+        <header><h3>ผู้คุมสอบ</h3><p>อาจารย์และพนักงาน</p></header>
+        <ul>
+          <li><span>ตารางเวรคุมสอบของตนเอง<small>แยกช่วงกลางภาค / ปลายภาค</small></span></li>
+          <li><span>เปิดหน้าจอคุมสอบได้ 30 นาทีก่อนสอบ</span></li>
+          <li><span>ค้นหาห้องกรณีคุมสอบแทน</span></li>
+          <li><span>ยืนยัน “สอบเสร็จ / ส่งข้อสอบแล้ว” รายวิชา</span></li>
+          <li><span>เพิ่มเวรลงปฏิทินอีเมล<small>อยู่ระหว่างพัฒนา</small></span></li>
+        </ul>
+      </article>
+      <article class="panel admin">
+        <header><h3>ฝ่ายจัดสอบ (Admin Panel)</h3><p>ติดตามและตั้งค่าทั้งระบบ</p></header>
+        <ul>
+          <li><span><span class="live-dot" aria-hidden="true"></span>ห้องที่กำลังคุมสอบอยู่ตอนนี้<small>ไฟเขียวเมื่อหน้าจอคุมสอบเปิดอยู่</small></span></li>
+          <li><span>สถานะการส่งข้อสอบรายวิชาและรายห้อง</span></li>
+          <li><span>ข้อกำหนดเพิ่มเติมรายวิชา ขึ้นจอห้องสอบ<small>เช่น อนุญาตเครื่องคิดเลข</small></span></li>
+          <li><span>ตั้งเวลาแจ้งเตือนของทุกห้อง</span></li>
+          <li><span>จำลองหน้าจอคุมสอบของทุกห้องก่อนใช้จริง</span></li>
+          <li><span>สถิติการใช้งานระบบ</span></li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- Status -->
+  <section>
+    <div>
+      <p class="eyebrow">สถานะโครงการ</p>
+      <h2>พร้อมใช้งาน เมื่อเชื่อมข้อมูลจาก Blendata และ MFU SSO</h2>
+    </div>
+    <div class="status">
+      <div class="state ok">
+        <span class="chip">เสร็จแล้ว</span>
+        <ul>
+          <li>ฟังก์ชันหลักครบทั้งหน้าจอคุมสอบ ผู้คุมสอบ และ Admin Panel</li>
+          <li>ฐานข้อมูล (schema) รองรับห้อง รายวิชา ผู้คุมสอบ และการดึงข้อมูลซ้ำทุกภาค</li>
+          <li>ผังที่นั่ง 131 ห้อง 10 อาคาร จากสำนักทะเบียน</li>
+          <li>ติดตั้งบนเซิร์ฟเวอร์ทดสอบแล้ว: <a class="link" href="https://iproctor.beta.mfu.ac.th/">iproctor.beta.mfu.ac.th</a></li>
+        </ul>
+      </div>
+      <div class="state todo">
+        <span class="chip">ขั้นต่อไป</span>
+        <ul>
+          <li><b>เชื่อม Blendata</b> — ยื่นคำขอข้อมูลแล้ว ช่องทางนำเข้าพร้อมรอ API</li>
+          <li><b>เชื่อม MFU SSO</b> — แทนการเข้าสู่ระบบแบบทดสอบ เพื่อความปลอดภัยของข้อมูล</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Centre for Digital Technology and Information, Mae Fah Luang University</span>
+    <span>Developed by the iProctor Team · Inspired by School of Science, MFU</span>
+  </footer>
+</main>
+</body>
+</html>

@@ -40,3 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+
+# python / agent tooling
+__pycache__/
+*.pyc
+skills/
+__MACOSX/
